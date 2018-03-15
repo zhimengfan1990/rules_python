@@ -170,7 +170,7 @@ parser.add_argument('--requirements', action='store',
                     help='The pip_import from which to draw dependencies.')
 
 parser.add_argument('--add-dependency', action='append',
-                    help='TODO')
+                    help='Specify additional dependencies beyond the ones specified in the wheel.')
 
 parser.add_argument('--directory', action='store', default='.',
                     help='The directory into which to expand things.')

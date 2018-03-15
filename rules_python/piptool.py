@@ -93,14 +93,17 @@ parser.add_argument('--input', action='store',
 parser.add_argument('--input-fix', action='store',
                     help=('The requirements-fix.txt file to import.'))
 
-parser.add_argument('--pip_args', action='append',
-                    help=('Extra arguments to send to pip.'))
-
 parser.add_argument('--output', action='store',
                     help=('The requirements.bzl file to export.'))
 
+parser.add_argument('--output-format', choices=['refer', 'download'], default='refer',
+                    help=('How whl_library rules should obtain the wheel.'))
+
 parser.add_argument('--directory', action='store',
                     help=('The directory into which to put .whl files.'))
+
+parser.add_argument('args', nargs=argparse.REMAINDER,
+                    help=('Extra arguments to send to pip.'))
 
 def determine_possible_extras(whls):
   """Determines the list of possible "extras" for each .whl
@@ -159,15 +162,17 @@ def determine_possible_extras(whls):
 def main():
   args = parser.parse_args()
 
-  pip_args = []
-  if args.pip_args:
-    pip_args = args.pip_args
-    # Handle the case where we had to add quotes to pass arguments with dashes
-    pip_args = [a if a[0] != "'" and a[0] != '"' else a[1:] for a in pip_args]
-    pip_args = [a if a[-1] != "'" and a[-1] != '"' else a[:-1] for a in pip_args]
-
+  pip_args = ["wheel"]
+  if args.directory:
+    pip_args += ["-w", args.directory]
+  if args.input:
+    pip_args += ["-r", args.input]
+  if len(args.args) > 0 and args.args[0] == '--':
+    pip_args += args.args[1:]
+  else:
+    pip_args += args.args
   # https://github.com/pypa/pip/blob/9.0.1/pip/__init__.py#L209
-  if pip_main(["wheel", "-w", args.directory, "-r", args.input] + pip_args):
+  if pip_main(pip_args):
     sys.exit(1)
 
   # Enumerate the .whl files we downloaded.
@@ -180,6 +185,7 @@ def main():
 
   whls = [Wheel(path) for path in list_whls()]
   possible_extras = determine_possible_extras(whls)
+  whls.sort(key=lambda x: x.distribution().lower())
 
   if args.input_fix:
       with open(args.input_fix, 'r') as f:
@@ -193,66 +199,39 @@ def main():
                       w.add_extra_deps(others)
                       break
 
+  if not args.output:
+    return
+
   def whl_library(wheel):
+    if args.output_format == 'download':
+      whl_or_requirement = "requirement = \"{}=={}\"".format(wheel.distribution(), wheel.version())
+    else:
+      whl_or_requirement = "whl = \"@{}//:{}\"".format(args.name, wheel.basename())
+    extra_attribs = ''
+    extras = ', '.join(['"%s"' % extra for extra in possible_extras.get(wheel, [])])
+    if extras != '':
+      extra_attribs += '\n    extras = [{}],'.format(extras)
+    extra_deps = ', '.join(['"%s"' % extra for extra in wheel.get_extra_deps()])
+    if extra_deps != '':
+      extra_attribs += '\n    extra_deps = [{}],'.format(extra_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
-    clean = """
-  if "{repo_name}" not in native.existing_rules():
-    whl_library(
-        name = "{repo_name}",
-        whl = "@{name}//:{path}",
-        requirements = "@{name}//:requirements.bzl",
-        extras = [{extras}],
-        extra_deps = [{extra_deps}]
-    )""".format(name=args.name, repo_name=wheel.repository_name(),
-                path=wheel.basename(),
-                extras=','.join([
-                  '"%s"' % extra
-                  for extra in possible_extras.get(wheel, [])
-                ]),
-                extra_deps=','.join([
-                    '"%s"' % extra
-                    for extra in wheel.get_extra_deps()]))
+    return """
+  whl_library(
+    name = "{repo_name}",
+    {whl_or_requirement},{extra_attribs}
+  )""".format(repo_name=wheel.repository_name(),
+                whl_or_requirement=whl_or_requirement,
+                extra_attribs=extra_attribs)
 
-    dirty = """
-  if "{repo_name}" not in native.existing_rules():
-    whl_library_dirty(
-        name = "{repo_name}",
-        whl = "@{name}//:{path}",
-        requirements = "@{name}//:requirements.bzl",
-        extras = [{extras}],
-        extra_deps = [{extra_deps}]
-    )""".format(name=args.name, repo_name=wheel.repository_name() + '_dirty',
-                path=wheel.basename(),
-                extras=','.join([
-                  '"%s"' % extra
-                  for extra in possible_extras.get(wheel, [])
-                ]),
-                extra_deps=','.join([
-                    '"%s"' % extra
-                    for extra in wheel.get_extra_deps()]))
-
-    return clean + '\n' + dirty
-
-  whl_targets = ','.join([
-    ','.join([
-      '"%s": "@%s//:pkg"' % (whl.distribution().lower(), whl.repository_name())
+  whl_targets = ',\n  '.join([
+    ',\n  '.join([
+      '"{dist}": "@{repo}//:pkg",\n  "{dist}:dirty": "@{repo}_dirty//:pkg"'.format(
+          dist=whl.distribution().lower(), repo=whl.repository_name())
     ] + [
       # For every extra that is possible from this requirements.txt
-      '"%s[%s]": "@%s//:%s"' % (whl.distribution().lower(), extra.lower(),
-                                whl.repository_name(), extra)
-      for extra in possible_extras.get(whl, [])
-    ])
-    for whl in whls
-  ])
-
-  whl_targets = whl_targets + ',' + ','.join([
-    ','.join([
-      '"%s": "@%s//:pkg"' % (whl.distribution().lower() + ':dirty', whl.repository_name() + '_dirty')
-    ] + [
-      # For every extra that is possible from this requirements.txt
-      '"%s[%s]": "@%s//:%s"' % (whl.distribution().lower() + ':dirty', extra.lower(),
-                                whl.repository_name() + '_dirty', extra)
+      '"{dist}[{extra_lower}]": "@{repo}//:{extra}",\n  "{dist}:dirty[{extra_lower}]": "@{repo}_dirty//:{extra}"'.format(
+        dist=whl.distribution().lower(), repo=whl.repository_name(), extra=extra, extra_lower=extra.lower())
       for extra in possible_extras.get(whl, [])
     ])
     for whl in whls
@@ -264,10 +243,10 @@ def main():
 #
 # Generated from {input}
 
-load("@io_bazel_rules_python//python:whl.bzl", "whl_library", "whl_library_dirty")
+load("@{name}//python:whl.bzl", "whl_library")
 
 def pip_install():
-  {whl_libraries}
+{whl_libraries}
 
 _requirements = {{
   {mappings}
@@ -280,7 +259,7 @@ def requirement(name):
   if name_key not in _requirements:
     fail("Could not find pip-provided dependency: '%s'" % name)
   return _requirements[name_key]
-""".format(input=args.input,
+""".format(input=args.input, name=args.name,
            whl_libraries='\n'.join(map(whl_library, whls)) if whls else "pass",
            mappings=whl_targets))
 

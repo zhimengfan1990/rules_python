@@ -14,66 +14,81 @@
 """Import .whl files into Bazel."""
 
 def _whl_impl(repository_ctx):
-  """Core implementation of whl_library."""
+    """Core implementation of whl_library."""
 
-  args = [
-    "python",
-    repository_ctx.path(repository_ctx.attr._script),
-    "--whl", repository_ctx.path(repository_ctx.attr.whl),
-    "--requirements", repository_ctx.attr.requirements,
-  ]
+    if repository_ctx.attr.requirement and repository_ctx.attr.whl:
+        fail("requirement and whl attribute are mutually exclusive")
 
-  if repository_ctx.attr.extra_deps:
-      for d in repository_ctx.attr.extra_deps:
-          args += ["--add-dependency", d]
+    if repository_ctx.attr.requirement:
+        cmd = [
+            "python", repository_ctx.path(repository_ctx.attr._piptool),
+            "--name", repository_ctx.attr.name,
+            "--directory", repository_ctx.path(""),
+        ]
+        cmd += ["--", repository_ctx.attr.requirement]
+        cmd += repository_ctx.attr.pip_args
+        if not repository_ctx.attr.dirty:
+            cmd += ["--no-deps"]
+        result = repository_ctx.execute(cmd, quiet=False)
+        if result.return_code:
+            fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
+        result = repository_ctx.execute(["sh", "-c", "ls ./%s-*.whl" % repository_ctx.attr.requirement.replace("==", "-")])
+        if result.return_code:
+            fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
+        whl = result.stdout.strip()
+    else:
+        whl = repository_ctx.path(repository_ctx.attr.whl)
 
-  if repository_ctx.attr.extras:
-    args += [
-      "--extras=%s" % extra
-      for extra in repository_ctx.attr.extras
+    args = [
+        "python",
+        repository_ctx.path(repository_ctx.attr._whl_script),
+        "--whl", whl,
+        "--directory", str(repository_ctx.path("")),
+        "--requirements", repository_ctx.attr.requirements,
     ]
 
-  if repository_ctx.attr._dirty:
-      args += ['--dirty']
+    if repository_ctx.attr.extra_deps:
+        for d in repository_ctx.attr.extra_deps:
+            args += ["--add-dependency", d]
 
-  result = repository_ctx.execute(args)
-  if result.return_code:
-    fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
+    if repository_ctx.attr.extras:
+        args += [
+        "--extras=%s" % extra
+        for extra in repository_ctx.attr.extras
+        ]
+
+    if repository_ctx.attr.dirty:
+        args += ['--dirty']
+
+    result = repository_ctx.execute(args)
+    if result.return_code:
+        fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
+
+    if repository_ctx.attr.requirement:
+        result = repository_ctx.execute(["sh", "-c", "rm ./*.whl"])
+        if result.return_code:
+            fail("removing wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
 whl_library = repository_rule(
     attrs = {
+        "requirement": attr.string(),
         "whl": attr.label(
             allow_files = True,
-            mandatory = True,
             single_file = True,
         ),
-        "requirements": attr.string(),
+        "requirements":  attr.string(),
         "extra_deps": attr.string_list(),
         "extras": attr.string_list(),
-        "_dirty": attr.bool(default=False),
-        "_script": attr.label(
+        "pip_args": attr.string_list(),
+        "dirty": attr.bool(default=False),
+        "_whl_script": attr.label(
             executable = True,
             default = Label("//rules_python:whl.py"),
             cfg = "host",
         ),
-    },
-    implementation = _whl_impl,
-)
-
-whl_library_dirty = repository_rule(
-    attrs = {
-        "whl": attr.label(
-            allow_files = True,
-            mandatory = True,
-            single_file = True,
-        ),
-        "requirements": attr.string(),
-        "extra_deps": attr.string_list(),
-        "extras": attr.string_list(),
-        "_dirty": attr.bool(default=True),
-        "_script": attr.label(
+        "_piptool": attr.label(
             executable = True,
-            default = Label("//rules_python:whl.py"),
+            default = Label("//tools:piptool.par"),
             cfg = "host",
         ),
     },

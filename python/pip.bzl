@@ -20,24 +20,57 @@ def _pip_import_impl(repository_ctx):
   # This is because Bazel requires BUILD files along all paths accessed
   # via //this/sort/of:path and we wouldn't be able to load our generated
   # requirements.bzl without it.
-  repository_ctx.file("BUILD", "")
+  repository_ctx.file("BUILD", """
+package(default_visibility = ["//visibility:public"])
+sh_binary(
+    name = "update",
+    srcs = ["update.sh"],
+)
+""")
 
-  # To see the output, pass: quiet=False
-  cmd = [
-    "python", repository_ctx.path(repository_ctx.attr._script),
-    "--name", repository_ctx.attr.name,
-    "--input", repository_ctx.path(repository_ctx.attr.requirements),
-    "--output", repository_ctx.path("requirements.bzl"),
-    "--directory", repository_ctx.path(""),
-  ]
-  extra_cmd = [["--pip_args", a] for a in repository_ctx.attr.pip_args]
-  cmd = cmd + [a for args in extra_cmd for a in args]
-  if repository_ctx.attr.requirements_fix:
-      cmd += ["--input-fix", repository_ctx.path(repository_ctx.attr.requirements_fix)]
-  result = repository_ctx.execute(cmd, quiet=False)
+  repository_ctx.file("python/BUILD", "")
+  repository_ctx.template(
+    "python/whl.bzl",
+    Label("//rules_python:whl.bzl.tpl"),
+    substitutions = {
+      "%{repo}": repository_ctx.name,
+      "%{pip_args}": ", ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
+      "%{requirements}": str(repository_ctx.attr.requirements_bzl),
+    })
 
-  if result.return_code:
-    fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
+  repository_ctx.template(
+    "update.sh",
+    Label("//rules_python:update.sh.tpl"),
+    substitutions = {
+      "%{piptool}": str(repository_ctx.path(repository_ctx.attr._script)),
+      "%{name}": repository_ctx.attr.name,
+      "%{requirements_txt}": str(repository_ctx.path(repository_ctx.attr.requirements)),
+      "%{requirements_fix}": str(repository_ctx.path(repository_ctx.attr.requirements_fix)) if repository_ctx.attr.requirements_fix else "",
+      "%{requirements_bzl}": str(repository_ctx.path(repository_ctx.attr.requirements_bzl)) if repository_ctx.attr.requirements_bzl else "",
+      "%{directory}": str(repository_ctx.path("")),
+      "%{pip_args}": " ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
+    },
+    executable=True,
+  )
+
+  if repository_ctx.attr.requirements_bzl:
+    repository_ctx.symlink(repository_ctx.path(repository_ctx.attr.requirements_bzl), "requirements.bzl")
+  else:
+    # To see the output, pass: quiet=False
+    cmd = [
+        "python", repository_ctx.path(repository_ctx.attr._script),
+        "--name", repository_ctx.attr.name,
+        "--input", repository_ctx.path(repository_ctx.attr.requirements),
+        "--output", repository_ctx.path("requirements.bzl"),
+        "--directory", repository_ctx.path(""),
+    ]
+    if repository_ctx.attr.requirements_fix:
+        cmd += ["--input-fix", repository_ctx.path(repository_ctx.attr.requirements_fix)]
+    cmd += ["--"] + repository_ctx.attr.pip_args
+    result = repository_ctx.execute(cmd, quiet=False)
+
+    if result.return_code:
+        fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
 
 pip_import = repository_rule(
     attrs = {
@@ -49,6 +82,10 @@ pip_import = repository_rule(
         "requirements_fix": attr.label(
             allow_files = True,
             mandatory = False,
+            single_file = True,
+        ),
+        "requirements_bzl": attr.label(
+            allow_files = True,
             single_file = True,
         ),
         "pip_args": attr.string_list(),
