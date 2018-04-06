@@ -129,6 +129,7 @@ _version_install()
 pip_import(
     name = "examples_boto",
     requirements = "//examples/boto:requirements.txt",
+    requirements_bzl = "//examples/boto:requirements.bzl",
 )
 
 load(

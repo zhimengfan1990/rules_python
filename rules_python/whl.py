@@ -49,9 +49,9 @@ class Wheel(object):
     parts = self.basename().split('-')
     return parts[1]
 
-  def repository_name(self):
+  def repository_name(self, prefix='pypi'):
     # Returns the canonical name of the Bazel repository for this package.
-    canonical = 'pypi__{}_{}'.format(self.distribution(), self.version())
+    canonical = '{}__{}_{}'.format(prefix, self.distribution(), self.version())
     # Escape any illegal characters with underscore.
     return re.sub('[-.]', '_', canonical)
 

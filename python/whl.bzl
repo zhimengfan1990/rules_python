@@ -20,10 +20,12 @@ def _whl_impl(repository_ctx):
         fail("requirement and whl attribute are mutually exclusive")
 
     if repository_ctx.attr.requirement:
+        repository_ctx.file("constraints.txt", "\n".join(repository_ctx.attr.constraints))
         cmd = [
             "python", repository_ctx.path(repository_ctx.attr._piptool),
             "--name", repository_ctx.attr.name,
             "--directory", repository_ctx.path(""),
+            "--constraint", repository_ctx.path("constraints.txt"),
         ]
         cmd += ["--", repository_ctx.attr.requirement]
         cmd += repository_ctx.attr.pip_args
@@ -72,10 +74,12 @@ def _whl_impl(repository_ctx):
 whl_library = repository_rule(
     attrs = {
         "requirement": attr.string(),
+        "constraints": attr.string_list(),
         "whl": attr.label(
             allow_files = True,
             single_file = True,
         ),
+        "whl_name": attr.string(),
         "requirements":  attr.string(),
         "extra_deps": attr.string_list(),
         "extras": attr.string_list(),

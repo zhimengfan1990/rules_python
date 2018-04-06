@@ -93,6 +93,9 @@ parser.add_argument('--input', action='store',
 parser.add_argument('--input-fix', action='store',
                     help=('The requirements-fix.txt file to import.'))
 
+parser.add_argument('--constraint', action='store',
+                    help=('An optional constraints file to pass to "pip wheel" command.'))
+
 parser.add_argument('--output', action='store',
                     help=('The requirements.bzl file to export.'))
 
@@ -162,11 +165,18 @@ def determine_possible_extras(whls):
 def main():
   args = parser.parse_args()
 
+
+
+  cache_dir = os.path.join(args.directory or ".", "cache")
+  os.makedirs(cache_dir)
   pip_args = ["wheel"]
+  pip_args += ["--cache-dir", cache_dir]
   if args.directory:
     pip_args += ["-w", args.directory]
   if args.input:
     pip_args += ["-r", args.input]
+  if args.constraint:
+    pip_args += ["-c", args.constraint]
   if len(args.args) > 0 and args.args[0] == '--':
     pip_args += args.args[1:]
   else:
@@ -176,16 +186,19 @@ def main():
     sys.exit(1)
 
   # Enumerate the .whl files we downloaded.
-  def list_whls():
-    dir = args.directory + '/'
-    for root, unused_dirnames, filenames in os.walk(dir):
+  def list_whls(dir):
+    for root, _, filenames in os.walk(dir + "/"):
       for fname in filenames:
         if fname.endswith('.whl'):
-          yield os.path.join(root, fname)
+          yield Wheel(os.path.join(root, fname))
 
-  whls = [Wheel(path) for path in list_whls()]
+  def wheels_from_dir(dir):
+    whls = list(list_whls(dir))
+    whls.sort(key=lambda x: x.distribution().lower())
+    return whls
+
+  whls = wheels_from_dir(args.directory)
   possible_extras = determine_possible_extras(whls)
-  whls.sort(key=lambda x: x.distribution().lower())
 
   if args.input_fix:
       with open(args.input_fix, 'r') as f:
@@ -202,36 +215,69 @@ def main():
   if not args.output:
     return
 
-  def whl_library(wheel):
-    if args.output_format == 'download':
-      whl_or_requirement = "requirement = \"{}=={}\"".format(wheel.distribution(), wheel.version())
+  fixed_versions = ["{}=={}".format(wheel.distribution(), wheel.version()) for wheel in whls]
+  fix_file = os.path.join(args.directory, "requirements-pip-fixed.txt")
+  with open(fix_file, "w") as f:
+    f.write('\n'.join(fixed_versions))
+
+  print("\n\nANALYZING DEPENDENCIES\n\n")
+
+  for wheel in whls:
+    wheel_dir = os.path.join(args.directory, os.path.splitext(wheel.basename())[0])
+    pip_args = ["wheel"]
+    pip_args += ["--cache-dir", cache_dir]
+    pip_args += ["-w", wheel_dir]
+    pip_args += ["{}=={}".format(wheel.distribution(), wheel.version())]
+    pip_args += ["-c", fix_file]
+    if len(args.args) > 0 and args.args[0] == '--':
+      pip_args += args.args[1:]
     else:
-      whl_or_requirement = "whl = \"@{}//:{}\"".format(args.name, wheel.basename())
-    extra_attribs = ''
-    extras = ', '.join(['"%s"' % extra for extra in possible_extras.get(wheel, [])])
+      pip_args += args.args
+    # https://github.com/pypa/pip/blob/9.0.1/pip/__init__.py#L209
+    if pip_main(pip_args):
+      sys.exit(1)
+
+    wheel.transitive_deps = [dep for dep in wheels_from_dir(wheel_dir) if dep.distribution() != wheel.distribution()]
+
+  def quote(string):
+    return '"{}"'.format(string)
+
+  # If we are generating whl_library rules that are intended to be fully
+  # deterministic and we lock the transient dependency versions, then we
+  # don't want to share repositories across different pip_import repositories.
+  scope = args.name if args.output_format == 'download' else None
+
+  def whl_library(wheel):
+    attrs = {"name": quote(wheel.repository_name(scope))}
+    if args.output_format == 'download':
+      attrs["requirement"] = '"{}=={}"'.format(wheel.distribution(), wheel.version())
+      attrs["whl_name"] = quote(wheel.basename())
+      print(wheel.transitive_deps)
+      constraints = ', '.join(['"{}=={}"'.format(dep.distribution(), dep.version()) for dep in wheel.transitive_deps])
+      attrs["constraints"] = '[{}]'.format(constraints)
+    else:
+      attrs["whl"] = '"@{}//:{}"'.format(args.name, wheel.basename())
+    extras = ', '.join([quote(extra) for extra in possible_extras.get(wheel, [])])
     if extras != '':
-      extra_attribs += '\n    extras = [{}],'.format(extras)
-    extra_deps = ', '.join(['"%s"' % extra for extra in wheel.get_extra_deps()])
+      attrs["extras"] = '[{}]'.format(extras)
+    extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_deps()])
     if extra_deps != '':
-      extra_attribs += '\n    extra_deps = [{}],'.format(extra_deps)
+      attrs["extra_deps"] = '[{}]'.format(extra_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """
   whl_library(
-    name = "{repo_name}",
-    {whl_or_requirement},{extra_attribs}
-  )""".format(repo_name=wheel.repository_name(),
-                whl_or_requirement=whl_or_requirement,
-                extra_attribs=extra_attribs)
+    {},
+  )""".format(",\n    ".join(["{} = {}".format(k, v) for k, v in attrs.items()]))
 
   whl_targets = ',\n  '.join([
     ',\n  '.join([
       '"{dist}": "@{repo}//:pkg",\n  "{dist}:dirty": "@{repo}_dirty//:pkg"'.format(
-          dist=whl.distribution().lower(), repo=whl.repository_name())
+          dist=whl.distribution().lower(), repo=whl.repository_name(scope))
     ] + [
       # For every extra that is possible from this requirements.txt
       '"{dist}[{extra_lower}]": "@{repo}//:{extra}",\n  "{dist}:dirty[{extra_lower}]": "@{repo}_dirty//:{extra}"'.format(
-        dist=whl.distribution().lower(), repo=whl.repository_name(), extra=extra, extra_lower=extra.lower())
+        dist=whl.distribution().lower(), repo=whl.repository_name(scope), extra=extra, extra_lower=extra.lower())
       for extra in possible_extras.get(whl, [])
     ])
     for whl in whls
