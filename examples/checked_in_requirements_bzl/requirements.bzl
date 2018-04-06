@@ -55,6 +55,12 @@ def pip_install():
   )
 
   whl_library(
+    requirement = "configparser==3.5.0",
+    whl_name = "configparser-3.5.0-py2-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__configparser_3_5_0",
+  )
+
+  whl_library(
     requirement = "cryptography==2.2.2",
     whl_name = "cryptography-2.2.2-cp27-cp27mu-manylinux1_x86_64.whl",
     name = "examples_checked_in_requirements_bzl__cryptography_2_2_2",
@@ -71,6 +77,12 @@ def pip_install():
     requirement = "docutils==0.14",
     whl_name = "docutils-0.14-py2-none-any.whl",
     name = "examples_checked_in_requirements_bzl__docutils_0_14",
+  )
+
+  whl_library(
+    requirement = "entrypoints==0.2.3",
+    whl_name = "entrypoints-0.2.3-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__entrypoints_0_2_3",
   )
 
   whl_library(
@@ -273,6 +285,8 @@ _requirements = {
   "chardet:dirty": "@examples_checked_in_requirements_bzl__chardet_3_0_4_dirty//:pkg",
   "cmarkgfm": "@examples_checked_in_requirements_bzl__cmarkgfm_0_3_0//:pkg",
   "cmarkgfm:dirty": "@examples_checked_in_requirements_bzl__cmarkgfm_0_3_0_dirty//:pkg",
+  "configparser": "@examples_checked_in_requirements_bzl__configparser_3_5_0//:pkg",
+  "configparser:dirty": "@examples_checked_in_requirements_bzl__configparser_3_5_0_dirty//:pkg",
   "cryptography": "@examples_checked_in_requirements_bzl__cryptography_2_2_2//:pkg",
   "cryptography:dirty": "@examples_checked_in_requirements_bzl__cryptography_2_2_2_dirty//:pkg",
   "cryptography[docstest]": "@examples_checked_in_requirements_bzl__cryptography_2_2_2//:docstest",
@@ -281,6 +295,8 @@ _requirements = {
   "doc8:dirty": "@examples_checked_in_requirements_bzl__doc8_0_8_0_dirty//:pkg",
   "docutils": "@examples_checked_in_requirements_bzl__docutils_0_14//:pkg",
   "docutils:dirty": "@examples_checked_in_requirements_bzl__docutils_0_14_dirty//:pkg",
+  "entrypoints": "@examples_checked_in_requirements_bzl__entrypoints_0_2_3//:pkg",
+  "entrypoints:dirty": "@examples_checked_in_requirements_bzl__entrypoints_0_2_3_dirty//:pkg",
   "enum34": "@examples_checked_in_requirements_bzl__enum34_1_1_6//:pkg",
   "enum34:dirty": "@examples_checked_in_requirements_bzl__enum34_1_1_6_dirty//:pkg",
   "future": "@examples_checked_in_requirements_bzl__future_0_16_0//:pkg",

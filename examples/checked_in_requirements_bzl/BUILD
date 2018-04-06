@@ -21,5 +21,5 @@ load("//python:python.bzl", "py_test")
 py_test(
     name = "version_test",
     srcs = ["version_test.py"],
-    deps = [requirement("pip")],
+    deps = [requirement("pip"), requirement("cryptography"), requirement("entrypoints")],
 )

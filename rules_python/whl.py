@@ -14,6 +14,7 @@
 """The whl modules defines classes for interacting with Python packages."""
 
 import argparse
+import collections
 import distlib.markers
 import itertools
 import json
@@ -156,9 +157,26 @@ class Wheel(object):
 
   # _parse_metadata parses METADATA files according to https://www.python.org/dev/peps/pep-0314/
   def _parse_metadata(self, content):
-    # TODO: handle fields other than just name
     name_pattern = re.compile('Name: (.*)')
-    return { 'name': name_pattern.search(content).group(1) }
+    dep_pattern = re.compile('Requires-Dist: ([^;]+)(;(.*))?')
+    deps = []
+    env_deps = collections.defaultdict(list)
+    for line in content.splitlines():
+      m = dep_pattern.match(line)
+      if m:
+        dep = m.group(1).strip()
+        env = m.group(3)
+        if env:
+          env_deps[env.strip()] += [dep]
+        else:
+          deps += [dep]
+    return {
+      'name': name_pattern.search(content).group(1).strip(),
+      'run_requires': [{ 'requires': deps }] + [{
+        'environment': k,
+        'requires': v,
+      } for k, v in env_deps.items()],
+    }
 
 def unpack(args):
   whl = Wheel(args.whl)
