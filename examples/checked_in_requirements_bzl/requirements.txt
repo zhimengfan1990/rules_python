@@ -1,1 +1,2 @@
 pip==9.0.0
+cryptography[docs,docstest]==2.2.2
