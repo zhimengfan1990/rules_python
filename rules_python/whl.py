@@ -160,31 +160,6 @@ class Wheel(object):
     name_pattern = re.compile('Name: (.*)')
     return { 'name': name_pattern.search(content).group(1) }
 
-
-parser = argparse.ArgumentParser(
-    description='Unpack a WHL file as a py_library.')
-
-parser.add_argument('--whl', action='store',
-                    help=('The .whl file we are expanding.'))
-
-parser.add_argument('--requirements', action='store',
-                    help='The pip_import from which to draw dependencies.')
-
-parser.add_argument('--add-dependency', action='append',
-                    help='Specify additional dependencies beyond the ones specified in the wheel.')
-
-parser.add_argument('--directory', action='store', default='.',
-                    help='The directory into which to expand things.')
-
-parser.add_argument('--extras', action='append',
-                    help='The set of extras for which to generate library targets.')
-
-parser.add_argument('--dirty', action='store_true',
-                    help='TODO')
-
-def main():
-  unpack(parser.parse_args())
-
 def unpack(args):
   whl = Wheel(args.whl)
 
