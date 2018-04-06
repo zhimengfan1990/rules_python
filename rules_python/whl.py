@@ -14,6 +14,7 @@
 """The whl modules defines classes for interacting with Python packages."""
 
 import argparse
+import distlib.markers
 import itertools
 import json
 import os
@@ -78,7 +79,7 @@ class Wheel(object):
   def name(self):
     return self.metadata().get('name')
 
-  def dependencies(self, extra=None):
+  def dependencies(self, extra=None, all_extras=False):
     """Access the dependencies of this Wheel.
 
     Args:
@@ -91,15 +92,15 @@ class Wheel(object):
     # TODO(mattmoor): Is there a schema to follow for this?
     found = set()
     run_requires = self.metadata().get('run_requires', [])
+    run_requires += self.get_extra_deps()
+
     for requirement in run_requires:
       if requirement.get('extra') != extra:
         # Match the requirements for the extra we're looking for.
         continue
       if 'environment' in requirement:
-        # TODO(mattmoor): What's the best way to support "environment"?
-        # This typically communicates things like python version (look at
-        # "wheel" for a good example)
-        continue
+        if not distlib.markers.interpret(requirement['environment']):
+          continue
       requires = requirement.get('requires', [])
       for entry in requires:
         # Strip off any trailing versioning data.

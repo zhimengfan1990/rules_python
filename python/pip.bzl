@@ -58,7 +58,7 @@ sh_binary(
   else:
     # To see the output, pass: quiet=False
     cmd = [
-        "python", repository_ctx.path(repository_ctx.attr._script),
+        "python", repository_ctx.path(repository_ctx.attr._script), "resolve",
         "--name", repository_ctx.attr.name,
         "--input", repository_ctx.path(repository_ctx.attr.requirements),
         "--output", repository_ctx.path("requirements.bzl"),

@@ -18,7 +18,7 @@ fi
 
 rm -rf "$BUILD_AREA"
 
-python "%{piptool}" \
+python "%{piptool}" resolve \
     --name "%{name}" \
     --input "$REQUIREMENTS_TXT" \
     --output "$REQUIREMENTS_BZL_TEMP" \

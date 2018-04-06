@@ -22,7 +22,9 @@ def _whl_impl(repository_ctx):
     if repository_ctx.attr.requirement:
         repository_ctx.file("constraints.txt", "\n".join(repository_ctx.attr.constraints))
         cmd = [
-            "python", repository_ctx.path(repository_ctx.attr._piptool),
+            "python",
+            repository_ctx.path(repository_ctx.attr._piptool),
+            "resolve",
             "--name", repository_ctx.attr.name,
             "--directory", repository_ctx.path(""),
             "--constraint", repository_ctx.path("constraints.txt"),
@@ -43,7 +45,8 @@ def _whl_impl(repository_ctx):
 
     args = [
         "python",
-        repository_ctx.path(repository_ctx.attr._whl_script),
+        repository_ctx.path(repository_ctx.attr._piptool),
+        "unpack",
         "--whl", whl,
         "--directory", str(repository_ctx.path("")),
         "--requirements", repository_ctx.attr.requirements,
@@ -85,11 +88,6 @@ whl_library = repository_rule(
         "extras": attr.string_list(),
         "pip_args": attr.string_list(),
         "dirty": attr.bool(default=False),
-        "_whl_script": attr.label(
-            executable = True,
-            default = Label("//rules_python:whl.py"),
-            cfg = "host",
-        ),
         "_piptool": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),
