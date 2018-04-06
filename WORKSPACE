@@ -156,6 +156,12 @@ pip_import(
     requirements = "//examples/checked_in_requirements_bzl:requirements.txt",
     requirements_fix = "//examples/checked_in_requirements_bzl:requirements-fix.txt",
     requirements_bzl = "//examples/checked_in_requirements_bzl:requirements.bzl",
+    additional_buildtime_deps = {
+        "pycuda": ["numpy"],
+    },
+    additional_runtime_deps = {
+        "scikit-learn": ["scipy", "numpy"],
+    },
 )
 
 load(

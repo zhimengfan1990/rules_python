@@ -13,6 +13,9 @@
 # limitations under the License.
 """Import pip requirements into Bazel."""
 
+def expand_deps(d):
+    return "\n".join(["{} {}".format(k, " ".join([v for v in vv])) for k, vv in d.items()])
+
 def _pip_import_impl(repository_ctx):
   """Core implementation of pip_import."""
 
@@ -29,6 +32,9 @@ sh_binary(
 """)
 
   repository_ctx.file("python/BUILD", "")
+  print(repository_ctx.attr.additional_runtime_deps)
+  repository_ctx.file("runtime-fix.txt", expand_deps(repository_ctx.attr.additional_runtime_deps))
+  repository_ctx.file("buildtime-fix.txt", expand_deps(repository_ctx.attr.additional_buildtime_deps))
   repository_ctx.template(
     "python/whl.bzl",
     Label("//rules_python:whl.bzl.tpl"),
@@ -45,8 +51,9 @@ sh_binary(
       "%{piptool}": str(repository_ctx.path(repository_ctx.attr._script)),
       "%{name}": repository_ctx.attr.name,
       "%{requirements_txt}": str(repository_ctx.path(repository_ctx.attr.requirements)),
-      "%{requirements_fix}": str(repository_ctx.path(repository_ctx.attr.requirements_fix)) if repository_ctx.attr.requirements_fix else "",
       "%{requirements_bzl}": str(repository_ctx.path(repository_ctx.attr.requirements_bzl)) if repository_ctx.attr.requirements_bzl else "",
+      "%{runtime_fix}": str(repository_ctx.path("runtime-fix.txt")),
+      "%{buildtime_fix}": str(repository_ctx.path("buildtime-fix.txt")),
       "%{directory}": str(repository_ctx.path("")),
       "%{pip_args}": " ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
     },
@@ -89,6 +96,8 @@ pip_import = repository_rule(
             single_file = True,
         ),
         "pip_args": attr.string_list(),
+        "additional_buildtime_deps": attr.string_list_dict(),
+        "additional_runtime_deps": attr.string_list_dict(),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

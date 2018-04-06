@@ -170,8 +170,8 @@ def resolve(args):
   whls = wheels_from_dir(args.directory)
   possible_extras = determine_possible_extras(whls)
 
-  if args.input_fix:
-      with open(args.input_fix, 'r') as f:
+  def parse_fix(filename):
+      with open(filename, 'r') as f:
           lines = f.readlines()
           for line in lines:
               items = line.strip().split(' ')
@@ -179,18 +179,25 @@ def resolve(args):
               others = items[1:]
               for w in whls:
                   if w.distribution().lower() == main_ref.replace('-', '_').lower():
-                      w.add_extra_deps(others)
+                      yield w, others
                       break
+
+  if args.buildtime_fix:
+    for w, deps in parse_fix(args.buildtime_fix):
+      w.add_extra_buildtime_deps(deps)
+  if args.runtime_fix:
+    for w, deps in parse_fix(args.runtime_fix):
+      w.add_extra_runtime_deps(deps)
 
   if not args.output:
     return
 
-  fixed_versions = ["{}=={}".format(wheel.distribution(), wheel.version()) for wheel in whls]
-  fix_file = os.path.join(args.directory, "requirements-pip-fixed.txt")
-  with open(fix_file, "w") as f:
-    f.write('\n'.join(fixed_versions))
+  #fixed_versions = ["{}=={}".format(wheel.distribution(), wheel.version()) for wheel in whls]
+  #fix_file = os.path.join(args.directory, "requirements-pip-fixed.txt")
+  #with open(fix_file, "w") as f:
+  #  f.write('\n'.join(fixed_versions))
 
-  print("\n\nANALYZING DEPENDENCIES\n\n")
+  #print("\n\nANALYZING DEPENDENCIES\n\n")
 
 
   def quote(string):
@@ -200,6 +207,11 @@ def resolve(args):
   # deterministic and we lock the transient dependency versions, then we
   # don't want to share repositories across different pip_import repositories.
   scope = args.name if args.output_format == 'download' else None
+
+  whl_map = {
+    whl.distribution(): whl
+    for whl in whls
+  }
 
   def whl_library(wheel):
     attrs = {"name": quote(wheel.repository_name(scope))}
@@ -213,9 +225,12 @@ def resolve(args):
       attrs["extras"] = '[{}]'.format(extras)
     # Hopefully these are not needed and we can use requirements-fix.txt ONLY
     # for ensuring build-time deps!
-    #extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_deps()])
-    #if extra_deps != '':
-    #  attrs["extra_deps"] = '[{}]'.format(extra_deps)
+    extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
+    if extra_deps != '':
+      attrs["extra_deps"] = '[{}]'.format(extra_deps)
+    build_deps = ', '.join(['"@{}//:pkg"'.format(whl_map[dep].repository_name(scope)) for dep in wheel.get_extra_buildtime_deps()])
+    if build_deps != '':
+      attrs["whl_build_deps"] = '[{}]'.format(build_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """
@@ -279,6 +294,12 @@ parser.add_argument('--input', action='store',
 
 parser.add_argument('--input-fix', action='store',
                     help=('The requirements-fix.txt file to import.'))
+
+parser.add_argument('--runtime-fix', action='store',
+                    help=('Additional runtime dependencies.'))
+
+parser.add_argument('--buildtime-fix', action='store',
+                    help=('Additional buildtime dependencies.'))
 
 parser.add_argument('--constraint', action='store',
                     help=('An optional constraints file to pass to "pip wheel" command.'))

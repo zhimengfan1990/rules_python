@@ -20,20 +20,18 @@ def _whl_impl(repository_ctx):
         fail("requirement and whl attribute are mutually exclusive")
 
     if repository_ctx.attr.requirement:
-        #repository_ctx.file("constraints.txt", "\n".join(repository_ctx.attr.constraints))
-        pythonpath = ':'.join([repository_ctx.path(dep) for dep in repository_ctx.attr.whl_build_deps])
-        if pythonpath != '':
-            fail(pythonpath)
+        root = str(repository_ctx.path("../..")) + '/'
+        pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.whl_build_deps])
         cmd = [
             "python",
             repository_ctx.path(repository_ctx.attr._piptool),
             "resolve",
             "--name", repository_ctx.attr.name,
             "--directory", repository_ctx.path(""),
-        #    "--constraint", repository_ctx.path("constraints.txt"),
         ]
         cmd += ["--", repository_ctx.attr.requirement]
         cmd += repository_ctx.attr.pip_args
+        cmd += ["-v"]
         if not repository_ctx.attr.dirty:
             cmd += ["--no-deps"]
         result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})

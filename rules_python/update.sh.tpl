@@ -2,8 +2,9 @@
 set -e
 
 REQUIREMENTS_TXT="%{requirements_txt}"
-REQUIREMENTS_FIX="%{requirements_fix}"
 REQUIREMENTS_BZL="%{requirements_bzl}"
+RUNTIME_FIX="%{runtime_fix}"
+BUILDTIME_FIX="%{buildtime_fix}"
 BUILD_AREA="%{directory}/build"
 
 if [ -z "$REQUIREMENTS_BZL" ]; then
@@ -12,17 +13,14 @@ fi
 REQUIREMENTS_BZL_TEMP="requirements.bzl.tmp"
 echo "Generating $REQUIREMENTS_BZL from $REQUIREMENTS_TXT..."
 
-if [ -n "$REQUIREMENTS_FIX" ]; then
-    REQUIREMENTS_FIX="--input-fix $REQUIREMENTS_FIX"
-fi
-
 rm -rf "$BUILD_AREA"
 
 python "%{piptool}" resolve \
     --name "%{name}" \
     --input "$REQUIREMENTS_TXT" \
     --output "$REQUIREMENTS_BZL_TEMP" \
-    $REQUIREMENTS_FIX \
+    --runtime-fix $RUNTIME_FIX \
+    --buildtime-fix $BUILDTIME_FIX \
     --output-format download \
     --directory $BUILD_AREA -- %{pip_args}
 

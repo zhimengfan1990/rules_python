@@ -23,9 +23,9 @@ py_test(
     srcs = ["version_test.py"],
     deps = [
         requirement("pip"),
-        equirement("cryptography"),
-        requirement("entrypoints"),
+        #requirement("cryptography"),
+        #requirement("entrypoints"),
         requirement("scikit-learn"),
-        requirement("pycuda"),
+        #requirement("pycuda"),
     ],
 )
