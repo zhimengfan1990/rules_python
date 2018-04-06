@@ -182,7 +182,9 @@ parser.add_argument('--dirty', action='store_true',
                     help='TODO')
 
 def main():
-  args = parser.parse_args()
+  unpack(parser.parse_args())
+
+def unpack(args):
   whl = Wheel(args.whl)
 
   extra_deps = args.add_dependency

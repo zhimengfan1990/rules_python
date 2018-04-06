@@ -79,34 +79,8 @@ def pip_main(argv):
     argv = ["--disable-pip-version-check", "--cert", cert_path] + argv
     return pip.main(argv)
 
-from rules_python.whl import Wheel
+from rules_python.whl import Wheel, unpack
 
-parser = argparse.ArgumentParser(
-    description='Import Python dependencies into Bazel.')
-
-parser.add_argument('--name', action='store',
-                    help=('The namespace of the import.'))
-
-parser.add_argument('--input', action='store',
-                    help=('The requirements.txt file to import.'))
-
-parser.add_argument('--input-fix', action='store',
-                    help=('The requirements-fix.txt file to import.'))
-
-parser.add_argument('--constraint', action='store',
-                    help=('An optional constraints file to pass to "pip wheel" command.'))
-
-parser.add_argument('--output', action='store',
-                    help=('The requirements.bzl file to export.'))
-
-parser.add_argument('--output-format', choices=['refer', 'download'], default='refer',
-                    help=('How whl_library rules should obtain the wheel.'))
-
-parser.add_argument('--directory', action='store',
-                    help=('The directory into which to put .whl files.'))
-
-parser.add_argument('args', nargs=argparse.REMAINDER,
-                    help=('Extra arguments to send to pip.'))
 
 def determine_possible_extras(whls):
   """Determines the list of possible "extras" for each .whl
@@ -162,11 +136,7 @@ def determine_possible_extras(whls):
     for whl in whls
   }
 
-def main():
-  args = parser.parse_args()
-
-
-
+def resolve(args):
   cache_dir = os.path.join(args.directory or ".", "cache")
   os.makedirs(cache_dir)
   pip_args = ["wheel"]
@@ -222,22 +192,6 @@ def main():
 
   print("\n\nANALYZING DEPENDENCIES\n\n")
 
-  for wheel in whls:
-    wheel_dir = os.path.join(args.directory, os.path.splitext(wheel.basename())[0])
-    pip_args = ["wheel"]
-    pip_args += ["--cache-dir", cache_dir]
-    pip_args += ["-w", wheel_dir]
-    pip_args += ["{}=={}".format(wheel.distribution(), wheel.version())]
-    pip_args += ["-c", fix_file]
-    if len(args.args) > 0 and args.args[0] == '--':
-      pip_args += args.args[1:]
-    else:
-      pip_args += args.args
-    # https://github.com/pypa/pip/blob/9.0.1/pip/__init__.py#L209
-    if pip_main(pip_args):
-      sys.exit(1)
-
-    wheel.transitive_deps = [dep for dep in wheels_from_dir(wheel_dir) if dep.distribution() != wheel.distribution()]
 
   def quote(string):
     return '"{}"'.format(string)
@@ -252,9 +206,6 @@ def main():
     if args.output_format == 'download':
       attrs["requirement"] = '"{}=={}"'.format(wheel.distribution(), wheel.version())
       attrs["whl_name"] = quote(wheel.basename())
-      print(wheel.transitive_deps)
-      constraints = ', '.join(['"{}=={}"'.format(dep.distribution(), dep.version()) for dep in wheel.transitive_deps])
-      attrs["constraints"] = '[{}]'.format(constraints)
     else:
       attrs["whl"] = '"@{}//:{}"'.format(args.name, wheel.basename())
     extras = ', '.join([quote(extra) for extra in possible_extras.get(wheel, [])])
@@ -308,6 +259,65 @@ def requirement(name):
 """.format(input=args.input, name=args.name,
            whl_libraries='\n'.join(map(whl_library, whls)) if whls else "pass",
            mappings=whl_targets))
+
+
+global_parser = argparse.ArgumentParser(
+    description='Import Python dependencies into Bazel.')
+subparsers = global_parser.add_subparsers()
+
+# piptool resolve
+parser = subparsers.add_parser('resolve', help='Resolve wheels from requirements.txt')
+parser.set_defaults(func=resolve)
+
+parser.add_argument('--name', action='store',
+                    help=('The namespace of the import.'))
+
+parser.add_argument('--input', action='store',
+                    help=('The requirements.txt file to import.'))
+
+parser.add_argument('--input-fix', action='store',
+                    help=('The requirements-fix.txt file to import.'))
+
+parser.add_argument('--constraint', action='store',
+                    help=('An optional constraints file to pass to "pip wheel" command.'))
+
+parser.add_argument('--output', action='store',
+                    help=('The requirements.bzl file to export.'))
+
+parser.add_argument('--output-format', choices=['refer', 'download'], default='refer',
+                    help=('How whl_library rules should obtain the wheel.'))
+
+parser.add_argument('--directory', action='store',
+                    help=('The directory into which to put .whl files.'))
+
+parser.add_argument('args', nargs=argparse.REMAINDER,
+                    help=('Extra arguments to send to pip.'))
+
+# piptool unpack
+parser = subparsers.add_parser('unpack', help='Unpack a WHL file as a py_library')
+parser.set_defaults(func=unpack)
+
+parser.add_argument('--whl', action='store',
+                    help=('The .whl file we are expanding.'))
+
+parser.add_argument('--requirements', action='store',
+                    help='The pip_import from which to draw dependencies.')
+
+parser.add_argument('--add-dependency', action='append',
+                    help='Specify additional dependencies beyond the ones specified in the wheel.')
+
+parser.add_argument('--directory', action='store', default='.',
+                    help='The directory into which to expand things.')
+
+parser.add_argument('--extras', action='append',
+                    help='The set of extras for which to generate library targets.')
+
+parser.add_argument('--dirty', action='store_true',
+                    help='TODO')
+
+def main():
+  args = global_parser.parse_args()
+  args.func(args)
 
 if __name__ == '__main__':
   main()
