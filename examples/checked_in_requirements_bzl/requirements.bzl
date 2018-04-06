@@ -13,9 +13,21 @@ def pip_install():
   )
 
   whl_library(
+    requirement = "appdirs==1.4.3",
+    whl_name = "appdirs-1.4.3-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__appdirs_1_4_3",
+  )
+
+  whl_library(
     requirement = "asn1crypto==0.24.0",
     whl_name = "asn1crypto-0.24.0-py2.py3-none-any.whl",
     name = "examples_checked_in_requirements_bzl__asn1crypto_0_24_0",
+  )
+
+  whl_library(
+    requirement = "attrs==17.4.0",
+    whl_name = "attrs-17.4.0-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__attrs_17_4_0",
   )
 
   whl_library(
@@ -68,6 +80,12 @@ def pip_install():
   )
 
   whl_library(
+    requirement = "decorator==4.2.1",
+    whl_name = "decorator-4.2.1-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__decorator_4_2_1",
+  )
+
+  whl_library(
     requirement = "doc8==0.8.0",
     whl_name = "doc8-0.8.0-py2.py3-none-any.whl",
     name = "examples_checked_in_requirements_bzl__doc8_0_8_0",
@@ -89,6 +107,12 @@ def pip_install():
     requirement = "enum34==1.1.6",
     whl_name = "enum34-1.1.6-py2-none-any.whl",
     name = "examples_checked_in_requirements_bzl__enum34_1_1_6",
+  )
+
+  whl_library(
+    requirement = "funcsigs==1.0.2",
+    whl_name = "funcsigs-1.0.2-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__funcsigs_1_0_2",
   )
 
   whl_library(
@@ -130,9 +154,27 @@ def pip_install():
   )
 
   whl_library(
+    requirement = "Mako==1.0.7",
+    whl_name = "Mako-1.0.7-py2-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__Mako_1_0_7",
+  )
+
+  whl_library(
     requirement = "MarkupSafe==1.0",
     whl_name = "MarkupSafe-1.0-cp27-cp27mu-linux_x86_64.whl",
     name = "examples_checked_in_requirements_bzl__MarkupSafe_1_0",
+  )
+
+  whl_library(
+    requirement = "more_itertools==4.1.0",
+    whl_name = "more_itertools-4.1.0-py2-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__more_itertools_4_1_0",
+  )
+
+  whl_library(
+    requirement = "numpy==1.14.2",
+    whl_name = "numpy-1.14.2-cp27-cp27mu-manylinux1_x86_64.whl",
+    name = "examples_checked_in_requirements_bzl__numpy_1_14_2",
   )
 
   whl_library(
@@ -154,9 +196,27 @@ def pip_install():
   )
 
   whl_library(
+    requirement = "pluggy==0.6.0",
+    whl_name = "pluggy-0.6.0-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__pluggy_0_6_0",
+  )
+
+  whl_library(
+    requirement = "py==1.5.3",
+    whl_name = "py-1.5.3-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__py_1_5_3",
+  )
+
+  whl_library(
     requirement = "pycparser==2.18",
     whl_name = "pycparser-2.18-py2.py3-none-any.whl",
     name = "examples_checked_in_requirements_bzl__pycparser_2_18",
+  )
+
+  whl_library(
+    requirement = "pycuda==2017.1.1",
+    whl_name = "pycuda-2017.1.1-cp27-cp27mu-linux_x86_64.whl",
+    name = "examples_checked_in_requirements_bzl__pycuda_2017_1_1",
   )
 
   whl_library(
@@ -175,6 +235,18 @@ def pip_install():
     requirement = "pyparsing==2.2.0",
     whl_name = "pyparsing-2.2.0-py2.py3-none-any.whl",
     name = "examples_checked_in_requirements_bzl__pyparsing_2_2_0",
+  )
+
+  whl_library(
+    requirement = "pytest==3.5.0",
+    whl_name = "pytest-3.5.0-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__pytest_3_5_0",
+  )
+
+  whl_library(
+    requirement = "pytools==2018.3",
+    whl_name = "pytools-2018.3-py2.py3-none-any.whl",
+    name = "examples_checked_in_requirements_bzl__pytools_2018_3",
   )
 
   whl_library(
@@ -199,6 +271,12 @@ def pip_install():
     requirement = "restructuredtext_lint==1.1.3",
     whl_name = "restructuredtext_lint-1.1.3-py2-none-any.whl",
     name = "examples_checked_in_requirements_bzl__restructuredtext_lint_1_1_3",
+  )
+
+  whl_library(
+    requirement = "scikit_learn==0.17.1",
+    whl_name = "scikit_learn-0.17.1-cp27-cp27mu-manylinux1_x86_64.whl",
+    name = "examples_checked_in_requirements_bzl__scikit_learn_0_17_1",
   )
 
   whl_library(
@@ -271,8 +349,12 @@ def pip_install():
 _requirements = {
   "alabaster": "@examples_checked_in_requirements_bzl__alabaster_0_7_10//:pkg",
   "alabaster:dirty": "@examples_checked_in_requirements_bzl__alabaster_0_7_10_dirty//:pkg",
+  "appdirs": "@examples_checked_in_requirements_bzl__appdirs_1_4_3//:pkg",
+  "appdirs:dirty": "@examples_checked_in_requirements_bzl__appdirs_1_4_3_dirty//:pkg",
   "asn1crypto": "@examples_checked_in_requirements_bzl__asn1crypto_0_24_0//:pkg",
   "asn1crypto:dirty": "@examples_checked_in_requirements_bzl__asn1crypto_0_24_0_dirty//:pkg",
+  "attrs": "@examples_checked_in_requirements_bzl__attrs_17_4_0//:pkg",
+  "attrs:dirty": "@examples_checked_in_requirements_bzl__attrs_17_4_0_dirty//:pkg",
   "babel": "@examples_checked_in_requirements_bzl__Babel_2_5_3//:pkg",
   "babel:dirty": "@examples_checked_in_requirements_bzl__Babel_2_5_3_dirty//:pkg",
   "bleach": "@examples_checked_in_requirements_bzl__bleach_2_1_3//:pkg",
@@ -291,6 +373,8 @@ _requirements = {
   "cryptography:dirty": "@examples_checked_in_requirements_bzl__cryptography_2_2_2_dirty//:pkg",
   "cryptography[docstest]": "@examples_checked_in_requirements_bzl__cryptography_2_2_2//:docstest",
   "cryptography:dirty[docstest]": "@examples_checked_in_requirements_bzl__cryptography_2_2_2_dirty//:docstest",
+  "decorator": "@examples_checked_in_requirements_bzl__decorator_4_2_1//:pkg",
+  "decorator:dirty": "@examples_checked_in_requirements_bzl__decorator_4_2_1_dirty//:pkg",
   "doc8": "@examples_checked_in_requirements_bzl__doc8_0_8_0//:pkg",
   "doc8:dirty": "@examples_checked_in_requirements_bzl__doc8_0_8_0_dirty//:pkg",
   "docutils": "@examples_checked_in_requirements_bzl__docutils_0_14//:pkg",
@@ -299,6 +383,8 @@ _requirements = {
   "entrypoints:dirty": "@examples_checked_in_requirements_bzl__entrypoints_0_2_3_dirty//:pkg",
   "enum34": "@examples_checked_in_requirements_bzl__enum34_1_1_6//:pkg",
   "enum34:dirty": "@examples_checked_in_requirements_bzl__enum34_1_1_6_dirty//:pkg",
+  "funcsigs": "@examples_checked_in_requirements_bzl__funcsigs_1_0_2//:pkg",
+  "funcsigs:dirty": "@examples_checked_in_requirements_bzl__funcsigs_1_0_2_dirty//:pkg",
   "future": "@examples_checked_in_requirements_bzl__future_0_16_0//:pkg",
   "future:dirty": "@examples_checked_in_requirements_bzl__future_0_16_0_dirty//:pkg",
   "html5lib": "@examples_checked_in_requirements_bzl__html5lib_1_0_1//:pkg",
@@ -315,22 +401,38 @@ _requirements = {
   "jinja2:dirty": "@examples_checked_in_requirements_bzl__Jinja2_2_10_dirty//:pkg",
   "jinja2[i18n]": "@examples_checked_in_requirements_bzl__Jinja2_2_10//:i18n",
   "jinja2:dirty[i18n]": "@examples_checked_in_requirements_bzl__Jinja2_2_10_dirty//:i18n",
+  "mako": "@examples_checked_in_requirements_bzl__Mako_1_0_7//:pkg",
+  "mako:dirty": "@examples_checked_in_requirements_bzl__Mako_1_0_7_dirty//:pkg",
   "markupsafe": "@examples_checked_in_requirements_bzl__MarkupSafe_1_0//:pkg",
   "markupsafe:dirty": "@examples_checked_in_requirements_bzl__MarkupSafe_1_0_dirty//:pkg",
+  "more_itertools": "@examples_checked_in_requirements_bzl__more_itertools_4_1_0//:pkg",
+  "more_itertools:dirty": "@examples_checked_in_requirements_bzl__more_itertools_4_1_0_dirty//:pkg",
+  "numpy": "@examples_checked_in_requirements_bzl__numpy_1_14_2//:pkg",
+  "numpy:dirty": "@examples_checked_in_requirements_bzl__numpy_1_14_2_dirty//:pkg",
   "packaging": "@examples_checked_in_requirements_bzl__packaging_17_1//:pkg",
   "packaging:dirty": "@examples_checked_in_requirements_bzl__packaging_17_1_dirty//:pkg",
   "pbr": "@examples_checked_in_requirements_bzl__pbr_4_0_1//:pkg",
   "pbr:dirty": "@examples_checked_in_requirements_bzl__pbr_4_0_1_dirty//:pkg",
   "pip": "@examples_checked_in_requirements_bzl__pip_9_0_0//:pkg",
   "pip:dirty": "@examples_checked_in_requirements_bzl__pip_9_0_0_dirty//:pkg",
+  "pluggy": "@examples_checked_in_requirements_bzl__pluggy_0_6_0//:pkg",
+  "pluggy:dirty": "@examples_checked_in_requirements_bzl__pluggy_0_6_0_dirty//:pkg",
+  "py": "@examples_checked_in_requirements_bzl__py_1_5_3//:pkg",
+  "py:dirty": "@examples_checked_in_requirements_bzl__py_1_5_3_dirty//:pkg",
   "pycparser": "@examples_checked_in_requirements_bzl__pycparser_2_18//:pkg",
   "pycparser:dirty": "@examples_checked_in_requirements_bzl__pycparser_2_18_dirty//:pkg",
+  "pycuda": "@examples_checked_in_requirements_bzl__pycuda_2017_1_1//:pkg",
+  "pycuda:dirty": "@examples_checked_in_requirements_bzl__pycuda_2017_1_1_dirty//:pkg",
   "pyenchant": "@examples_checked_in_requirements_bzl__pyenchant_2_0_0//:pkg",
   "pyenchant:dirty": "@examples_checked_in_requirements_bzl__pyenchant_2_0_0_dirty//:pkg",
   "pygments": "@examples_checked_in_requirements_bzl__Pygments_2_2_0//:pkg",
   "pygments:dirty": "@examples_checked_in_requirements_bzl__Pygments_2_2_0_dirty//:pkg",
   "pyparsing": "@examples_checked_in_requirements_bzl__pyparsing_2_2_0//:pkg",
   "pyparsing:dirty": "@examples_checked_in_requirements_bzl__pyparsing_2_2_0_dirty//:pkg",
+  "pytest": "@examples_checked_in_requirements_bzl__pytest_3_5_0//:pkg",
+  "pytest:dirty": "@examples_checked_in_requirements_bzl__pytest_3_5_0_dirty//:pkg",
+  "pytools": "@examples_checked_in_requirements_bzl__pytools_2018_3//:pkg",
+  "pytools:dirty": "@examples_checked_in_requirements_bzl__pytools_2018_3_dirty//:pkg",
   "pytz": "@examples_checked_in_requirements_bzl__pytz_2018_3//:pkg",
   "pytz:dirty": "@examples_checked_in_requirements_bzl__pytz_2018_3_dirty//:pkg",
   "readme_renderer": "@examples_checked_in_requirements_bzl__readme_renderer_18_1//:pkg",
@@ -339,6 +441,8 @@ _requirements = {
   "requests:dirty": "@examples_checked_in_requirements_bzl__requests_2_18_4_dirty//:pkg",
   "restructuredtext_lint": "@examples_checked_in_requirements_bzl__restructuredtext_lint_1_1_3//:pkg",
   "restructuredtext_lint:dirty": "@examples_checked_in_requirements_bzl__restructuredtext_lint_1_1_3_dirty//:pkg",
+  "scikit_learn": "@examples_checked_in_requirements_bzl__scikit_learn_0_17_1//:pkg",
+  "scikit_learn:dirty": "@examples_checked_in_requirements_bzl__scikit_learn_0_17_1_dirty//:pkg",
   "setuptools": "@examples_checked_in_requirements_bzl__setuptools_39_0_1//:pkg",
   "setuptools:dirty": "@examples_checked_in_requirements_bzl__setuptools_39_0_1_dirty//:pkg",
   "setuptools[certs]": "@examples_checked_in_requirements_bzl__setuptools_39_0_1//:certs",

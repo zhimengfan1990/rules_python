@@ -20,20 +20,23 @@ def _whl_impl(repository_ctx):
         fail("requirement and whl attribute are mutually exclusive")
 
     if repository_ctx.attr.requirement:
-        repository_ctx.file("constraints.txt", "\n".join(repository_ctx.attr.constraints))
+        #repository_ctx.file("constraints.txt", "\n".join(repository_ctx.attr.constraints))
+        pythonpath = ':'.join([repository_ctx.path(dep) for dep in repository_ctx.attr.whl_build_deps])
+        if pythonpath != '':
+            fail(pythonpath)
         cmd = [
             "python",
             repository_ctx.path(repository_ctx.attr._piptool),
             "resolve",
             "--name", repository_ctx.attr.name,
             "--directory", repository_ctx.path(""),
-            "--constraint", repository_ctx.path("constraints.txt"),
+        #    "--constraint", repository_ctx.path("constraints.txt"),
         ]
         cmd += ["--", repository_ctx.attr.requirement]
         cmd += repository_ctx.attr.pip_args
         if not repository_ctx.attr.dirty:
             cmd += ["--no-deps"]
-        result = repository_ctx.execute(cmd, quiet=False)
+        result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
         if result.return_code:
             fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
         result = repository_ctx.execute(["sh", "-c", "ls ./%s-*.whl" % repository_ctx.attr.requirement.replace("==", "-")])
@@ -77,7 +80,7 @@ def _whl_impl(repository_ctx):
 whl_library = repository_rule(
     attrs = {
         "requirement": attr.string(),
-        "constraints": attr.string_list(),
+        "whl_build_deps": attr.label_list(),
         "whl": attr.label(
             allow_files = True,
             single_file = True,

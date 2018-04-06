@@ -211,9 +211,11 @@ def resolve(args):
     extras = ', '.join([quote(extra) for extra in possible_extras.get(wheel, [])])
     if extras != '':
       attrs["extras"] = '[{}]'.format(extras)
-    extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_deps()])
-    if extra_deps != '':
-      attrs["extra_deps"] = '[{}]'.format(extra_deps)
+    # Hopefully these are not needed and we can use requirements-fix.txt ONLY
+    # for ensuring build-time deps!
+    #extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_deps()])
+    #if extra_deps != '':
+    #  attrs["extra_deps"] = '[{}]'.format(extra_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """

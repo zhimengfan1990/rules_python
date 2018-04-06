@@ -1,3 +1,5 @@
 pip==9.0.0
 cryptography[docs,docstest]==2.2.2
 entrypoints==0.2.3
+scikit-learn==0.17.1
+pycuda==2017.1.1
