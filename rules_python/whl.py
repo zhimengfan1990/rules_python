@@ -113,8 +113,12 @@ class Wheel(object):
         # Match the requirements for the extra we're looking for.
         continue
       if 'environment' in requirement:
-        if not distlib.markers.interpret(requirement['environment']):
-          continue
+        try:
+          if not distlib.markers.interpret(requirement['environment']):
+            continue
+        except SyntaxError as e:
+          raise RuntimeError('Error interpreting environment for {} ({}): {}'.format(
+                            self.distribution(), requirement['environment'], str(e)))
       requires = requirement.get('requires', [])
       for entry in requires:
         # Strip off any trailing versioning data.

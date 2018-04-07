@@ -137,10 +137,10 @@ def determine_possible_extras(whls):
   }
 
 def resolve(args):
-  cache_dir = os.path.join(args.directory or ".", "cache")
-  os.makedirs(cache_dir)
+  #cache_dir = os.path.join(args.directory or ".", "cache")
+  #os.makedirs(cache_dir)
   pip_args = ["wheel"]
-  pip_args += ["--cache-dir", cache_dir]
+  #pip_args += ["--cache-dir", cache_dir]
   if args.directory:
     pip_args += ["-w", args.directory]
   if args.input:

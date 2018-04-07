@@ -154,7 +154,6 @@ _extras_install()
 pip_import(
     name = "examples_checked_in_requirements_bzl",
     requirements = "//examples/checked_in_requirements_bzl:requirements.txt",
-    requirements_fix = "//examples/checked_in_requirements_bzl:requirements-fix.txt",
     requirements_bzl = "//examples/checked_in_requirements_bzl:requirements.bzl",
     additional_buildtime_deps = {
         "pycuda": ["numpy"],
