@@ -44,6 +44,7 @@ def _whl_impl(repository_ctx):
         whl = result.stdout.strip()
     elif repository_ctx.attr.whl:
         whl = repository_ctx.path(repository_ctx.attr.whl)
+        repository_ctx.symlink(repository_ctx.attr.whl, repository_ctx.attr.whl.name)
 
     args = [
         "python",

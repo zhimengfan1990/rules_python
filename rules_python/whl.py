@@ -218,16 +218,21 @@ package(default_visibility = ["//visibility:public"])
 
 load("{requirements}", "requirement")
 
+filegroup(
+  name = "wheel",
+  data = ["{wheel}"],
+)
 py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
-    data = glob(["**/*"], exclude=["**/*.py", "**/* *", "BUILD", "WORKSPACE"]),
+    data = glob(["**/*"], exclude=["**/*.py", "**/* *", "*.whl", "BUILD", "WORKSPACE"]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
     imports = [{imports}],
     deps = [{dependencies}],
 )
 {extras}""".format(
+  wheel = whl.basename(),
   requirements=args.requirements,
   dependencies=','.join([
     'requirement("%s")' % d
