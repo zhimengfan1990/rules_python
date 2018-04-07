@@ -227,10 +227,10 @@ def resolve(args):
     # for ensuring build-time deps!
     extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
     if extra_deps != '':
-      attrs["extra_deps"] = '[{}]'.format(extra_deps)
+      attrs["runtime_deps"] = '[{}]'.format(extra_deps)
     build_deps = ', '.join(['"@{}//:pkg"'.format(whl_map[dep].repository_name(scope)) for dep in wheel.get_extra_buildtime_deps()])
     if build_deps != '':
-      attrs["whl_build_deps"] = '[{}]'.format(build_deps)
+      attrs["buildtime_deps"] = '[{}]'.format(build_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """

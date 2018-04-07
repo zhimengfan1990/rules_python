@@ -19,6 +19,7 @@ def _whl_impl(repository_ctx):
     if repository_ctx.attr.requirement and repository_ctx.attr.whl:
         fail("requirement and whl attribute are mutually exclusive")
 
+    whl = None
     if repository_ctx.attr.requirement:
         root = str(repository_ctx.path("../..")) + '/'
         pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.whl_build_deps])
@@ -41,17 +42,23 @@ def _whl_impl(repository_ctx):
         if result.return_code:
             fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
         whl = result.stdout.strip()
-    else:
+    elif repository_ctx.attr.whl:
         whl = repository_ctx.path(repository_ctx.attr.whl)
 
     args = [
         "python",
         repository_ctx.path(repository_ctx.attr._piptool),
         "unpack",
-        "--whl", whl,
         "--directory", str(repository_ctx.path("")),
         "--requirements", repository_ctx.attr.requirements,
     ]
+
+    if whl:
+        args += ["--whl", whl]
+
+    for w in repository_ctx.attr.wheels:
+        print(w)
+        #args += ["--whl", w]
 
     if repository_ctx.attr.extra_deps:
         for d in repository_ctx.attr.extra_deps:
@@ -83,6 +90,7 @@ whl_library = repository_rule(
             allow_files = True,
             single_file = True,
         ),
+        "wheels": attr.label_list(),
         "whl_name": attr.string(),
         "requirements":  attr.string(),
         "extra_deps": attr.string_list(),
@@ -97,6 +105,7 @@ whl_library = repository_rule(
     },
     implementation = _whl_impl,
 )
+
 
 """A rule for importing <code>.whl</code> dependencies into Bazel.
 
