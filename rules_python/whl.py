@@ -196,7 +196,8 @@ class Wheel(object):
     }
 
 def unpack(args):
-  whl = Wheel(args.whl)
+  whls = [Wheel(w) for w in args.whl]
+  whl = whls[0]
 
   extra_deps = args.add_dependency
   if not extra_deps:
@@ -205,7 +206,8 @@ def unpack(args):
   # Extract the files into the current directory
   # TODO(conrado): do one expansion for each extra? It might be easier to create completely new
   # wheel repos
-  whl.expand(args.directory, args.dirty)
+  for w in whls:
+    w.expand(args.directory, args.dirty)
 
   imports = ['.']
   purelib_path = os.path.join(args.directory, '%s-%s.data' % (whl.distribution(), whl.version()), 'purelib')

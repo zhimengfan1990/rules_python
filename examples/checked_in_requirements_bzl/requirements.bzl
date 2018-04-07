@@ -8,7 +8,7 @@ def pip_install():
 
   whl_library(
     requirement = "configparser==3.5.0",
-    whl_name = "configparser-3.5.0-py2-none-any.whl",
+    whl_name = "configparser-3.5.0-cp27-none-any.whl",
     name = "examples_checked_in_requirements_bzl__configparser_3_5_0",
   )
 
@@ -31,10 +31,10 @@ def pip_install():
   )
 
   whl_library(
-    extra_deps = ["numpy", "scipy"],
     requirement = "scikit_learn==0.17.1",
     whl_name = "scikit_learn-0.17.1-cp27-cp27mu-manylinux1_x86_64.whl",
     name = "examples_checked_in_requirements_bzl__scikit_learn_0_17_1",
+    runtime_deps = ["numpy", "scipy"],
   )
 
   whl_library(

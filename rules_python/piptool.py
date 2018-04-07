@@ -320,7 +320,7 @@ parser.add_argument('args', nargs=argparse.REMAINDER,
 parser = subparsers.add_parser('unpack', help='Unpack a WHL file as a py_library')
 parser.set_defaults(func=unpack)
 
-parser.add_argument('--whl', action='store',
+parser.add_argument('--whl', action='store', nargs='+',
                     help=('The .whl file we are expanding.'))
 
 parser.add_argument('--requirements', action='store',
