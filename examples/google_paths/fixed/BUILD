@@ -1,4 +1,5 @@
 load("@pip_deps//:requirements.bzl", "requirement")
+load(":rules.bzl", "py_binary")
 
 py_binary(
     name = 'example',
