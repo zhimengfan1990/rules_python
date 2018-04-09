@@ -51,7 +51,7 @@ def _whl_impl(repository_ctx):
         repository_ctx.path(repository_ctx.attr._piptool),
         "unpack",
         "--directory", str(repository_ctx.path("")),
-        "--requirements", repository_ctx.attr.requirements,
+        "--repository", repository_ctx.attr.repository,
     ]
 
     if whl:
@@ -93,7 +93,7 @@ whl_library = repository_rule(
         ),
         "wheels": attr.label_list(),
         "whl_name": attr.string(),
-        "requirements":  attr.string(),
+        "repository":  attr.string(),
         "extra_deps": attr.string_list(),
         "extras": attr.string_list(),
         "pip_args": attr.string_list(),
@@ -118,7 +118,7 @@ This rule imports a <code>.whl</code> file as a <code>py_library</code>:
 <pre><code>whl_library(
     name = "foo",
     whl = ":my-whl-file",
-    requirements = "name of pip_import rule",
+    repository = "name of pip_import rule",
 )
 </code></pre>
 

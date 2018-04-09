@@ -79,7 +79,7 @@ def py_library(*args, **kwargs):
   """
   native.py_library(*args, **kwargs)
 
-def py_binary(name, main=None, srcs=[], **kwargs):
+def __py_binary(name, main=None, srcs=[], **kwargs):
   """See the Bazel core py_binary documentation.
 
   [available here](
@@ -105,3 +105,11 @@ def py_test(*args, **kwargs):
   https://docs.bazel.build/versions/master/be/python.html#py_test).
   """
   native.py_test(*args, **kwargs)
+
+def py_binary(*args, **kwargs):
+  """See the Bazel core py_binary documentation.
+
+  [available here](
+  https://docs.bazel.build/versions/master/be/python.html#py_binary).
+  """
+  native.py_binary(*args, **kwargs)

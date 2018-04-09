@@ -1,5 +1,5 @@
 import os
-print(os.environ)
+#print(os.environ)
 
 import google.auth as auth
 print(auth)

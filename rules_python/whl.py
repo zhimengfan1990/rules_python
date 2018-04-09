@@ -218,7 +218,7 @@ def unpack(args):
     f.write("""
 package(default_visibility = ["//visibility:public"])
 
-load("{requirements}", "requirement")
+load("@{repository}//:requirements.bzl", "requirement")
 
 filegroup(
   name = "wheel",
@@ -231,13 +231,15 @@ py_library(
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
     imports = [{imports}],
-    deps = [{dependencies}],
+    deps = [
+        "@{repository}//:site",{dependencies}
+    ],
 )
 {extras}""".format(
   wheel = whl.basename(),
-  requirements=args.requirements,
-  dependencies=','.join([
-    'requirement("%s")' % d
+  repository=args.repository,
+  dependencies=''.join([
+    '\n        requirement("%s"),' % d
     for d in itertools.chain(whl.dependencies(), extra_deps)
   ]) if not args.dirty else '',
   imports=','.join(map(lambda i: '"%s"' % i, imports)),

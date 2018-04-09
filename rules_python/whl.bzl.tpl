@@ -6,7 +6,7 @@ def whl_library(name, requirement=None, buildtime_deps=[], runtime_deps=[], **kw
         _whl_library(
             name = name,
             requirement = requirement,
-            requirements = "@%{repo}//:requirements.bzl",
+            repository = "%{repo}",
             pip_args = [%{pip_args}],
             whl_build_deps = buildtime_deps,
             **kwargs
@@ -16,7 +16,7 @@ def whl_library(name, requirement=None, buildtime_deps=[], runtime_deps=[], **kw
         _whl_library(
             name = dirty_name,
             wheels = ["@%s//:wheel" % name],
-            requirements = "@%{repo}//:requirements.bzl",
+            repository = "%{repo}",
             pip_args = [%{pip_args}],
             **kwargs
         )

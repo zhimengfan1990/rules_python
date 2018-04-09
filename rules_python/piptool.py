@@ -323,7 +323,7 @@ parser.set_defaults(func=unpack)
 parser.add_argument('--whl', action='store', nargs='+',
                     help=('The .whl file we are expanding.'))
 
-parser.add_argument('--requirements', action='store',
+parser.add_argument('--repository', action='store',
                     help='The pip_import from which to draw dependencies.')
 
 parser.add_argument('--add-dependency', action='append',
