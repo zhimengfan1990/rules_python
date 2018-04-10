@@ -28,5 +28,6 @@ py_test(
         #requirement("google-cloud:dirty"),
         #requirement("scikit-learn"),
         #requirement("pycuda"),
+        requirement("botocore:dirty"),
     ],
 )

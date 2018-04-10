@@ -206,6 +206,7 @@ def unpack(args):
   whls = [Wheel(w) for w in args.whl]
   whl = whls[0]
 
+  print("WHEELS:", whls)
   extra_deps = args.add_dependency
   if not extra_deps:
       extra_deps = []
@@ -214,6 +215,7 @@ def unpack(args):
   # TODO(conrado): do one expansion for each extra? It might be easier to create completely new
   # wheel repos
   for w in whls:
+    print("Expanding {} to {}\n".format(w.distribution(), args.directory)
     w.expand(args.directory, False)
 
   imports = ['.']

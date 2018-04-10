@@ -1,5 +1,11 @@
 load("@io_bazel_rules_python//python:whl.bzl", _whl_library = "whl_library")
 
+def _wheel(wheels_map, name):
+  name_key = name.replace("-", "_").lower()
+  if name_key not in wheels_map:
+    fail("Could not find pip-provided dependency: '%s'" % name)
+  return wheels_map[name_key]
+
 def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, buildtime_deps=[], runtime_deps=[], **kwargs):
     dirty_name = "%s_dirty" % name
     if name not in native.existing_rules():
@@ -15,10 +21,11 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, 
         )
 
     if dirty_name not in native.existing_rules():
+        bd = (buildtime_deps + [_wheel(wheels_map, d) for d in runtime_deps]) if whl_name else []
         _whl_library(
             name = dirty_name,
             dirty = True,
-            #buildtime_deps = buildtime_deps + [wheels_map[d] for d in runtime_deps],
+            wheels = bd,
             #whl = "@%s//:%s" % (name, whl_name),
             whl = whl,
             repository = "%{repo}",
