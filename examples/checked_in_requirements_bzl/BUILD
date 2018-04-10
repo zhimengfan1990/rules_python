@@ -25,6 +25,7 @@ py_test(
         requirement("pip"),
         #requirement("cryptography"),
         #requirement("entrypoints"),
+        requirement("google-cloud:dirty"),
         requirement("scikit-learn"),
         #requirement("pycuda"),
     ],

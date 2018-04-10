@@ -32,7 +32,7 @@ def _whl_impl(repository_ctx):
         ]
         cmd += ["--", repository_ctx.attr.requirement]
         cmd += repository_ctx.attr.pip_args
-        cmd += ["-v"]
+        #cmd += ["-v"]
         if not repository_ctx.attr.dirty:
             cmd += ["--no-deps"]
         result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
@@ -58,8 +58,7 @@ def _whl_impl(repository_ctx):
         args += ["--whl", whl]
 
     for w in repository_ctx.attr.wheels:
-        print(w)
-        #args += ["--whl", w]
+        args += ["--whl", repository_ctx.path(w)]
 
     if repository_ctx.attr.extra_deps:
         for d in repository_ctx.attr.extra_deps:
@@ -74,14 +73,15 @@ def _whl_impl(repository_ctx):
     if repository_ctx.attr.dirty:
         args += ['--dirty']
 
+    print(args)
     result = repository_ctx.execute(args)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
 
-    if repository_ctx.attr.requirement:
-        result = repository_ctx.execute(["sh", "-c", "rm ./*.whl"])
-        if result.return_code:
-            fail("removing wheels failed: %s (%s)" % (result.stdout, result.stderr))
+    #if repository_ctx.attr.requirement:
+    #    result = repository_ctx.execute(["sh", "-c", "rm ./*.whl"])
+    #    if result.return_code:
+    #        fail("removing wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
 whl_library = repository_rule(
     attrs = {

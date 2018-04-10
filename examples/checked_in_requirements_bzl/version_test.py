@@ -21,6 +21,11 @@ class VersionTest(unittest.TestCase):
   def test_version(self):
     self.assertEqual(pip.__version__, '9.0.0')
 
+import google.auth as auth
+print(auth)
+
+import google.cloud as cl
+print(cl)
 
 if __name__ == '__main__':
   unittest.main()
