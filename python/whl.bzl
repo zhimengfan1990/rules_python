@@ -60,8 +60,8 @@ def _whl_impl(repository_ctx):
     for w in repository_ctx.attr.wheels:
         args += ["--whl", repository_ctx.path(w)]
 
-    if repository_ctx.attr.extra_deps:
-        for d in repository_ctx.attr.extra_deps:
+    if repository_ctx.attr.additional_runtime_deps:
+        for d in repository_ctx.attr.additional_runtime_deps:
             args += ["--add-dependency", d]
 
     if repository_ctx.attr.extras:
@@ -98,7 +98,6 @@ whl_library = repository_rule(
         "wheels": attr.label_list(),
         "whl_name": attr.string(),
         "repository":  attr.string(),
-        "extra_deps": attr.string_list(),
         "extras": attr.string_list(),
         "pip_args": attr.string_list(),
         "dirty": attr.bool(default=False),

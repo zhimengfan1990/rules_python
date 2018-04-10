@@ -161,6 +161,7 @@ pip_import(
     },
     additional_runtime_deps = {
         "scikit-learn": ["scipy", "numpy"],
+        "pip": ["docutils"],
     },
 )
 
