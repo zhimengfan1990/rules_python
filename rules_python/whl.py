@@ -117,8 +117,9 @@ class Wheel(object):
           if not distlib.markers.interpret(requirement['environment']):
             continue
         except SyntaxError as e:
-          raise RuntimeError('Error interpreting environment for {} ({}): {}'.format(
-                            self.distribution(), requirement['environment'], str(e)))
+          #raise RuntimeError('Error interpreting environment for {} ({}): {}'.format(
+          #                  self.distribution(), requirement['environment'], str(e)))
+          pass
       requires = requirement.get('requires', [])
       for entry in requires:
         # Strip off any trailing versioning data.
@@ -175,8 +176,10 @@ class Wheel(object):
   # _parse_metadata parses METADATA files according to https://www.python.org/dev/peps/pep-0314/
   def _parse_metadata(self, content):
     name_pattern = re.compile('Name: (.*)')
+    extra_pattern = re.compile('Provides-Extra: (.*)')
     dep_pattern = re.compile('Requires-Dist: ([^;]+)(;(.*))?')
     deps = []
+    extras = []
     env_deps = collections.defaultdict(list)
     for line in content.splitlines():
       m = dep_pattern.match(line)
@@ -187,11 +190,15 @@ class Wheel(object):
           env_deps[env.strip()] += [dep]
         else:
           deps += [dep]
+      m = extra_pattern.match(line)
+      if m:
+        extras += [m.group(1).strip()]
     return {
       'name': name_pattern.search(content).group(1).strip(),
       'run_requires': [{ 'requires': deps }] + [{
         'environment': k,
         'requires': v,
+        'extras': extras,
       } for k, v in env_deps.items()],
     }
 

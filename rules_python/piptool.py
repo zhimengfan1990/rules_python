@@ -127,7 +127,7 @@ def determine_possible_extras(whls):
     # it is possible to construct this dependency.
     return True
 
-  return {
+  possible_extras = {
     whl: [
       extra
       for extra in whl.extras()
@@ -135,6 +135,9 @@ def determine_possible_extras(whls):
     ]
     for whl in whls
   }
+  for whl in whls:
+    print("WHEEL {}, extras={}, possible={}\n".format(whl, whl.extras(), possible_extras[whl]))
+  return possible_extras
 
 def resolve(args):
   #cache_dir = os.path.join(args.directory or ".", "cache")

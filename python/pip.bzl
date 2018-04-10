@@ -25,6 +25,11 @@ def _pip_import_impl(repository_ctx):
   # requirements.bzl without it.
   repository_ctx.file("BUILD", """
 package(default_visibility = ["//visibility:public"])
+py_library(
+    name = "site",
+    srcs = [":sitecustomize.py"],
+    imports = ["."],
+)
 sh_binary(
     name = "update",
     srcs = ["update.sh"],
@@ -43,6 +48,14 @@ sh_binary(
       "%{pip_args}": ", ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
       "%{requirements}": str(repository_ctx.attr.requirements_bzl),
     })
+
+  repository_ctx.template(
+    "sitecustomize.py",
+    Label("//rules_python:sitecustomize.py.tpl"),
+    substitutions = {
+      "%{modules}": "".join(["\n    '%s'," % n for n in repository_ctx.attr.alias_namespaces]),
+    },
+  )
 
   repository_ctx.template(
     "update.sh",
@@ -98,6 +111,7 @@ pip_import = repository_rule(
         "pip_args": attr.string_list(),
         "additional_buildtime_deps": attr.string_list_dict(),
         "additional_runtime_deps": attr.string_list_dict(),
+        "alias_namespaces": attr.string_list(default=["google"]),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),
