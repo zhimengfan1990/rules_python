@@ -22,7 +22,7 @@ def _whl_impl(repository_ctx):
     whl = None
     if repository_ctx.attr.requirement:
         root = str(repository_ctx.path("../..")) + '/'
-        pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.whl_build_deps])
+        pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.buildtime_deps])
         cmd = [
             "python",
             repository_ctx.path(repository_ctx.attr._piptool),
@@ -86,7 +86,11 @@ def _whl_impl(repository_ctx):
 whl_library = repository_rule(
     attrs = {
         "requirement": attr.string(),
-        "whl_build_deps": attr.label_list(),
+        "buildtime_deps": attr.label_list(
+            # TODO: WheelProvider
+        ),
+        "runtime_deps": attr.string_list(),
+        "additional_runtime_deps": attr.string_list(),
         "whl": attr.label(
             allow_files = True,
             single_file = True,

@@ -217,12 +217,16 @@ def resolve(args):
       attrs["extras"] = '[{}]'.format(extras)
     # Hopefully these are not needed and we can use requirements-fix.txt ONLY
     # for ensuring build-time deps!
-    extra_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
-    if extra_deps != '':
-      attrs["runtime_deps"] = '[{}]'.format(extra_deps)
-    build_deps = ', '.join(['"@{}//:pkg"'.format(whl_map[dep].repository_name(scope)) for dep in wheel.get_extra_buildtime_deps()])
-    if build_deps != '':
-      attrs["buildtime_deps"] = '[{}]'.format(build_deps)
+    runtime_deps = ', '.join([quote(dep) for dep in wheel.dependencies()])
+    if runtime_deps != '':
+      attrs["runtime_deps"] = '[{}]'.format(runtime_deps)
+    additional_runtime_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
+    if additional_runtime_deps != '':
+      attrs["additional_runtime_deps"] = '[{}]'.format(additional_runtime_deps)
+    # TODO: use short name here!
+    buildtime_deps = ', '.join(['"@{}//:wheel"'.format(whl_map[dep].repository_name(scope)) for dep in wheel.get_extra_buildtime_deps()])
+    if buildtime_deps != '':
+      attrs["buildtime_deps"] = '[{}]'.format(buildtime_deps)
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """

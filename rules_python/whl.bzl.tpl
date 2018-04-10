@@ -8,13 +8,13 @@ def whl_library(name, requirement=None, whl=None, whl_name=None, buildtime_deps=
             requirement = requirement,
             repository = "%{repo}",
             pip_args = [%{pip_args}],
-            whl_build_deps = buildtime_deps,
+            buildtime_deps = buildtime_deps,
             whl_name = whl_name,
             whl = whl,
             **kwargs
         )
 
-    if dirty_name not in native.existing_rules():
+    if dirty_name not in native.existing_rules() and whl_name:
         _whl_library(
             name = dirty_name,
             dirty = True,
