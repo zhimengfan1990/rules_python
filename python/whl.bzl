@@ -74,7 +74,7 @@ def _whl_impl(repository_ctx):
         args += ['--dirty']
 
     print(args)
-    result = repository_ctx.execute(args)
+    result = repository_ctx.execute(args, quiet=False)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
 

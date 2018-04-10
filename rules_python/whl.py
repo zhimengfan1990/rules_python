@@ -203,6 +203,7 @@ class Wheel(object):
     }
 
 def unpack(args):
+  print(args)
   whls = [Wheel(w) for w in args.whl]
   whl = whls[0]
 
@@ -215,7 +216,7 @@ def unpack(args):
   # TODO(conrado): do one expansion for each extra? It might be easier to create completely new
   # wheel repos
   for w in whls:
-    print("Expanding {} to {}\n".format(w.distribution(), args.directory)
+    print("Expanding", w, args.directory)
     w.expand(args.directory, False)
 
   imports = ['.']
