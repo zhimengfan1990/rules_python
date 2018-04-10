@@ -20,6 +20,7 @@ def whl_library(name, requirement=None, whl=None, whl_name=None, buildtime_deps=
             dirty = True,
             #wheels = ["@%s//:%s" % (name, whl_name)],
             whl = "@%s//:%s" % (name, whl_name),
+            #whl = whl,
             repository = "%{repo}",
             pip_args = [%{pip_args}],
             whl_name = whl_name,

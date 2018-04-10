@@ -157,6 +157,7 @@ pip_import(
     requirements_bzl = "//examples/checked_in_requirements_bzl:requirements.bzl",
     additional_buildtime_deps = {
         "pycuda": ["numpy"],
+        "pip": ["botocore"],
     },
     additional_runtime_deps = {
         "scikit-learn": ["scipy", "numpy"],

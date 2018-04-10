@@ -214,7 +214,7 @@ def unpack(args):
   # TODO(conrado): do one expansion for each extra? It might be easier to create completely new
   # wheel repos
   for w in whls:
-    w.expand(args.directory, args.dirty)
+    w.expand(args.directory, False)
 
   imports = ['.']
   purelib_path = os.path.join(args.directory, '%s-%s.data' % (whl.distribution(), whl.version()), 'purelib')
