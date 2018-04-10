@@ -195,10 +195,10 @@ class Wheel(object):
         extras += [m.group(1).strip()]
     return {
       'name': name_pattern.search(content).group(1).strip(),
+      'extras': list(set(extras)),
       'run_requires': [{ 'requires': deps }] + [{
         'environment': k,
         'requires': v,
-        'extras': extras,
       } for k, v in env_deps.items()],
     }
 

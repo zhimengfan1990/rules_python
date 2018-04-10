@@ -127,7 +127,7 @@ def determine_possible_extras(whls):
     # it is possible to construct this dependency.
     return True
 
-  possible_extras = {
+  return {
     whl: [
       extra
       for extra in whl.extras()
@@ -135,9 +135,6 @@ def determine_possible_extras(whls):
     ]
     for whl in whls
   }
-  for whl in whls:
-    print("WHEEL {}, extras={}, possible={}\n".format(whl, whl.extras(), possible_extras[whl]))
-  return possible_extras
 
 def resolve(args):
   #cache_dir = os.path.join(args.directory or ".", "cache")
@@ -194,14 +191,6 @@ def resolve(args):
 
   if not args.output:
     return
-
-  #fixed_versions = ["{}=={}".format(wheel.distribution(), wheel.version()) for wheel in whls]
-  #fix_file = os.path.join(args.directory, "requirements-pip-fixed.txt")
-  #with open(fix_file, "w") as f:
-  #  f.write('\n'.join(fixed_versions))
-
-  #print("\n\nANALYZING DEPENDENCIES\n\n")
-
 
   def quote(string):
     return '"{}"'.format(string)
