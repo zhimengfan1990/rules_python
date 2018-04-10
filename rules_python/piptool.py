@@ -234,7 +234,7 @@ def resolve(args):
     {},
   )""".format(",\n    ".join(["{} = {}".format(k, v) for k, v in attrs.items()]))
 
-  whl_targets = ',\n  '.join([
+  requirements_map = ',\n  '.join([
     ',\n  '.join([
       '"{dist}": "@{repo}//:pkg",\n  "{dist}:dirty": "@{repo}_dirty//:pkg"'.format(
           dist=whl.distribution().lower(), repo=whl.repository_name(scope))
@@ -246,6 +246,13 @@ def resolve(args):
     ])
     for whl in whls
   ])
+  wheels_map = ',\n  '.join([
+    ',\n  '.join([
+      '"{dist}": "@{repo}//:{whl}"'.format(
+          dist=whl.distribution().lower(), repo=whl.repository_name(scope), whl=whl.basename())
+    ])
+    for whl in whls
+  ])
 
   with open(args.output, 'w') as f:
     f.write("""\
@@ -253,13 +260,14 @@ def resolve(args):
 #
 # Generated from {input}
 
-load("@{name}//python:whl.bzl", "whl_library")
-
-def pip_install():
-{whl_libraries}
+load("@{name}//python:whl.bzl", _whl_library = "whl_library")
 
 _requirements = {{
-  {mappings}
+  {requirements_map}
+}}
+
+_wheels = {{
+  {wheels_map}
 }}
 
 all_requirements = _requirements.values()
@@ -269,9 +277,16 @@ def requirement(name):
   if name_key not in _requirements:
     fail("Could not find pip-provided dependency: '%s'" % name)
   return _requirements[name_key]
+
+def whl_library(**kwargs):
+  _whl_library(wheels_map=_wheels, **kwargs)
+
+def pip_install():
+{whl_libraries}
+
 """.format(input=args.input, name=args.name,
            whl_libraries='\n'.join(map(whl_library, whls)) if whls else "pass",
-           mappings=whl_targets))
+           requirements_map=requirements_map, wheels_map=wheels_map))
 
 
 global_parser = argparse.ArgumentParser(

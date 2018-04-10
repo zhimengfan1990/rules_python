@@ -60,6 +60,15 @@ _requirements = {
   "six:dirty": "@examples_checked_in_requirements_bzl__six_1_11_0_dirty//:pkg"
 }
 
+_wheels = {
+  "botocore": "@examples_checked_in_requirements_bzl__botocore_1_10_3//:botocore-1.10.3-py2.py3-none-any.whl",
+  "docutils": "@examples_checked_in_requirements_bzl__docutils_0_14//:docutils-0.14-py2-none-any.whl",
+  "jmespath": "@examples_checked_in_requirements_bzl__jmespath_0_9_3//:jmespath-0.9.3-py2.py3-none-any.whl",
+  "pip": "@examples_checked_in_requirements_bzl__pip_9_0_0//:pip-9.0.0-py2.py3-none-any.whl",
+  "python_dateutil": "@examples_checked_in_requirements_bzl__python_dateutil_2_6_1//:python_dateutil-2.6.1-py2.py3-none-any.whl",
+  "six": "@examples_checked_in_requirements_bzl__six_1_11_0//:six-1.11.0-py2.py3-none-any.whl"
+}
+
 all_requirements = _requirements.values()
 
 def requirement(name):
