@@ -61,7 +61,7 @@ def pip_install():
   )
 
   whl_library(
-    buildtime_deps = ["@examples_checked_in_requirements_bzl__botocore_1_10_3//:wheel"],
+    buildtime_deps = ["botocore"],
     requirement = "pip==9.0.0",
     whl_name = "pip-9.0.0-py2.py3-none-any.whl",
     name = "examples_checked_in_requirements_bzl__pip_9_0_0",

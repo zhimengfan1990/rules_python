@@ -6,6 +6,9 @@ def _wheel(wheels_map, name):
     fail("Could not find pip-provided dependency: '%s'" % name)
   return wheels_map[name_key]
 
+def _wheels(wheels_map, names):
+  return [_wheel(wheels_map, n) for n in names]
+
 def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, buildtime_deps=[], runtime_deps=[], **kwargs):
     dirty_name = "%s_dirty" % name
     if name not in native.existing_rules():
@@ -14,14 +17,14 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, 
             requirement = requirement,
             repository = "%{repo}",
             pip_args = [%{pip_args}],
-            buildtime_deps = buildtime_deps,
+            buildtime_deps = _wheels(wheels_map, buildtime_deps),
             whl_name = whl_name,
             whl = whl,
             **kwargs
         )
 
     if dirty_name not in native.existing_rules():
-        bd = (buildtime_deps + [_wheel(wheels_map, d) for d in runtime_deps]) if whl_name else []
+        bd = _wheels(wheels_map, buildtime_deps + runtime_deps) if whl_name else []
         _whl_library(
             name = dirty_name,
             dirty = True,

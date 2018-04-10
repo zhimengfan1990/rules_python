@@ -224,7 +224,7 @@ def resolve(args):
     if additional_runtime_deps != '':
       attrs["additional_runtime_deps"] = '[{}]'.format(additional_runtime_deps)
     # TODO: use short name here!
-    buildtime_deps = ', '.join(['"@{}//:wheel"'.format(whl_map[dep].repository_name(scope)) for dep in wheel.get_extra_buildtime_deps()])
+    buildtime_deps = ', '.join([quote(dep) for dep in wheel.get_extra_buildtime_deps()])
     if buildtime_deps != '':
       attrs["buildtime_deps"] = '[{}]'.format(buildtime_deps)
     # Indentation here matters.  whl_library must be within the scope
