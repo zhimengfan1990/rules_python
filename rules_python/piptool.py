@@ -207,8 +207,8 @@ def resolve(args):
 
   def whl_library(wheel):
     attrs = {"name": quote(wheel.repository_name(scope))}
+    attrs["requirement"] = '"{}=={}"'.format(wheel.distribution(), wheel.version())
     if args.output_format == 'download':
-      attrs["requirement"] = '"{}=={}"'.format(wheel.distribution(), wheel.version())
       attrs["whl_name"] = quote(wheel.basename())
     else:
       attrs["whl"] = '"@{}//:{}"'.format(args.name, wheel.basename())
@@ -220,13 +220,13 @@ def resolve(args):
     runtime_deps = ', '.join([quote(dep) for dep in wheel.dependencies()])
     if runtime_deps != '':
       attrs["runtime_deps"] = '[{}]'.format(runtime_deps)
-    additional_runtime_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
-    if additional_runtime_deps != '':
-      attrs["additional_runtime_deps"] = '[{}]'.format(additional_runtime_deps)
-    # TODO: use short name here!
-    buildtime_deps = ', '.join([quote(dep) for dep in wheel.get_extra_buildtime_deps()])
-    if buildtime_deps != '':
-      attrs["buildtime_deps"] = '[{}]'.format(buildtime_deps)
+    #additional_runtime_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
+    #if additional_runtime_deps != '':
+    #  attrs["additional_runtime_deps"] = '[{}]'.format(additional_runtime_deps)
+    #buildtime_deps = ', '.join([quote(dep) for dep in wheel.get_extra_buildtime_deps()])
+    #if buildtime_deps != '':
+    #  attrs["buildtime_deps"] = '[{}]'.format(buildtime_deps)
+
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
     return """

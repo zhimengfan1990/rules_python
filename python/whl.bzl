@@ -16,11 +16,11 @@
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
-    if repository_ctx.attr.requirement and repository_ctx.attr.whl:
-        fail("requirement and whl attribute are mutually exclusive")
-
     whl = None
-    if repository_ctx.attr.requirement:
+    if repository_ctx.attr.whl:
+        whl = repository_ctx.path(repository_ctx.attr.whl)
+        repository_ctx.symlink(repository_ctx.attr.whl, repository_ctx.attr.whl.name)
+    elif repository_ctx.attr.requirement:
         root = str(repository_ctx.path("../..")) + '/'
         pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.buildtime_deps])
         cmd = [
@@ -42,9 +42,8 @@ def _whl_impl(repository_ctx):
         if result.return_code:
             fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
         whl = result.stdout.strip()
-    elif repository_ctx.attr.whl:
-        whl = repository_ctx.path(repository_ctx.attr.whl)
-        repository_ctx.symlink(repository_ctx.attr.whl, repository_ctx.attr.whl.name)
+    else:
+        fail("neither requirement nor whl attribute provided")
 
     args = [
         "python",
@@ -56,9 +55,6 @@ def _whl_impl(repository_ctx):
 
     if whl:
         args += ["--whl", whl]
-
-    for w in repository_ctx.attr.wheels:
-        args += ["--whl", repository_ctx.path(w)]
 
     if repository_ctx.attr.additional_runtime_deps:
         for d in repository_ctx.attr.additional_runtime_deps:
@@ -72,16 +68,13 @@ def _whl_impl(repository_ctx):
 
     if repository_ctx.attr.dirty:
         args += ['--dirty']
+        for w in repository_ctx.attr.buildtime_deps:
+            args += ["--whl", repository_ctx.path(w)]
 
     print(args)
     result = repository_ctx.execute(args, quiet=False)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
-
-    #if repository_ctx.attr.requirement:
-    #    result = repository_ctx.execute(["sh", "-c", "rm ./*.whl"])
-    #    if result.return_code:
-    #        fail("removing wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
 whl_library = repository_rule(
     attrs = {
@@ -89,13 +82,11 @@ whl_library = repository_rule(
         "buildtime_deps": attr.label_list(
             # TODO: WheelProvider
         ),
-        "runtime_deps": attr.string_list(),
         "additional_runtime_deps": attr.string_list(),
         "whl": attr.label(
             allow_files = True,
             single_file = True,
         ),
-        "wheels": attr.label_list(),
         "whl_name": attr.string(),
         "repository":  attr.string(),
         "extras": attr.string_list(),

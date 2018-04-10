@@ -16,6 +16,9 @@
 def expand_deps(d):
     return "\n".join(["{} {}".format(k, " ".join([v for v in vv])) for k, vv in d.items()])
 
+def expand_deps_to_dict(d):
+    return "".join(['\n    "{}": [{}],'.format(k, ", ".join(['"{}"'.format(v) for v in vv])) for k, vv in d.items()])
+
 def _pip_import_impl(repository_ctx):
   """Core implementation of pip_import."""
 
@@ -47,6 +50,8 @@ sh_binary(
       "%{repo}": repository_ctx.name,
       "%{pip_args}": ", ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
       "%{requirements}": str(repository_ctx.attr.requirements_bzl),
+      "%{additional_buildtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
+      "%{additional_runtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
     })
 
   repository_ctx.template(
