@@ -31,7 +31,7 @@ def _extract_wheels(ctx, wheels):
     if result.return_code:
         fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
-def _whl_impl(ctx):
+def _download_or_build_wheel_impl(ctx):
     """Core implementation of whl_library."""
 
     root = str(ctx.path("../..")) + '/'
@@ -57,7 +57,7 @@ def _whl_impl(ctx):
 
     _extract_wheels(ctx, [whl])
 
-whl_library = repository_rule(
+download_or_build_wheel = repository_rule(
     attrs = {
         "requirement": attr.string(),
         "buildtime_deps": attr.label_list(
@@ -73,7 +73,7 @@ whl_library = repository_rule(
             cfg = "host",
         ),
     },
-    implementation = _whl_impl,
+    implementation = _download_or_build_wheel_impl,
 )
 
 

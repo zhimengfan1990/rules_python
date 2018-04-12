@@ -1,4 +1,4 @@
-load("@io_bazel_rules_python//python:whl.bzl", _whl_library = "whl_library", "extract_wheels")
+load("@io_bazel_rules_python//python:whl.bzl", "download_or_build_wheel", "extract_wheels")
 
 _buildtime_deps = {%{additional_buildtime_deps}
 }
@@ -30,7 +30,7 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, 
                 extras = extras,
             )
         else:
-            _whl_library(
+            download_or_build_wheel(
                 name = name,
                 requirement = requirement,
                 repository = "%{repo}",
