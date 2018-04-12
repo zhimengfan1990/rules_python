@@ -31,68 +31,42 @@ def _extract_wheels(ctx, wheels):
     if result.return_code:
         fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
-def _whl_impl(repository_ctx):
+def _whl_impl(ctx):
     """Core implementation of whl_library."""
 
-    root = str(repository_ctx.path("../..")) + '/'
-    pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.buildtime_deps])
+    root = str(ctx.path("../..")) + '/'
+    pythonpath = ':'.join([root + dep.workspace_root for dep in ctx.attr.buildtime_deps])
     cmd = [
         "python",
-        repository_ctx.path(repository_ctx.attr._piptool),
+        ctx.path(ctx.attr._piptool),
         "resolve",
-        "--name", repository_ctx.attr.name,
-        "--directory", repository_ctx.path(""),
+        "--name", ctx.attr.name,
+        "--directory", ctx.path(""),
     ]
-    cmd += ["--", repository_ctx.attr.requirement]
-    cmd += repository_ctx.attr.pip_args
+    cmd += ["--", ctx.attr.requirement]
+    cmd += ctx.attr.pip_args
     #cmd += ["-v"]
     cmd += ["--no-deps"]
-    result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
+    result = ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
     if result.return_code:
         fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
-    result = repository_ctx.execute(["sh", "-c", "ls ./%s-*.whl" % repository_ctx.attr.requirement.replace("==", "-")])
+    result = ctx.execute(["sh", "-c", "ls ./%s-*.whl" % ctx.attr.requirement.replace("==", "-")])
     if result.return_code:
         fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
     whl = result.stdout.strip()
 
-    args = [
-        "python",
-        repository_ctx.path(repository_ctx.attr._piptool),
-        "unpack",
-        "--directory", str(repository_ctx.path("")),
-        "--repository", repository_ctx.attr.repository,
-    ]
-
-    args += ["--whl", whl]
-
-    if repository_ctx.attr.additional_runtime_deps:
-        for d in repository_ctx.attr.additional_runtime_deps:
-            args += ["--add-dependency", d]
-
-    if repository_ctx.attr.extras:
-        args += ["--extras=%s" % extra for extra in repository_ctx.attr.extras]
-
-    print(args)
-    result = repository_ctx.execute(args, quiet=False)
-    if result.return_code:
-        fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
+    _extract_wheels(ctx, [whl])
 
 whl_library = repository_rule(
     attrs = {
         "requirement": attr.string(),
         "buildtime_deps": attr.label_list(
-            # TODO: WheelProvider
+            allow_files=["*.whl"],
         ),
         "additional_runtime_deps": attr.string_list(),
-        "whl": attr.label(
-            allow_files = True,
-            single_file = True,
-        ),
-        "whl_name": attr.string(),
         "repository":  attr.string(),
         "extras": attr.string_list(),
         "pip_args": attr.string_list(),
-        "dirty": attr.bool(default=False),
         "_piptool": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

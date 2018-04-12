@@ -32,13 +32,10 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, 
         else:
             _whl_library(
                 name = name,
-                dirty = False,
                 requirement = requirement,
                 repository = "%{repo}",
                 buildtime_deps = _wheels(wheels_map, buildtime_deps),
                 additional_runtime_deps = additional_runtime_deps,
-                whl = whl,
-                whl_name = whl_name,
                 extras = extras,
                 pip_args = [%{pip_args}],
             )
