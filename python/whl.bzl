@@ -13,36 +13,47 @@
 # limitations under the License.
 """Import .whl files into Bazel."""
 
+def _extract_wheels(ctx, wheels):
+    args = [
+        "python",
+        ctx.path(ctx.attr._piptool),
+        "unpack",
+        "--directory", str(ctx.path("")),
+        "--repository", ctx.attr.repository,
+    ]
+
+    args += ["--whl=%s" % w for w in wheels]
+    args += ["--add-dependency=%s" % d for d in ctx.attr.additional_runtime_deps]
+    args += ["--extras=%s" % extra for extra in ctx.attr.extras]
+
+    print(args)
+    result = ctx.execute(args, quiet=False)
+    if result.return_code:
+        fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
+
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
-    whl = None
-    if repository_ctx.attr.whl:
-        whl = repository_ctx.path(repository_ctx.attr.whl)
-        repository_ctx.symlink(repository_ctx.attr.whl, repository_ctx.attr.whl.name)
-    elif repository_ctx.attr.requirement:
-        root = str(repository_ctx.path("../..")) + '/'
-        pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.buildtime_deps])
-        cmd = [
-            "python",
-            repository_ctx.path(repository_ctx.attr._piptool),
-            "resolve",
-            "--name", repository_ctx.attr.name,
-            "--directory", repository_ctx.path(""),
-        ]
-        cmd += ["--", repository_ctx.attr.requirement]
-        cmd += repository_ctx.attr.pip_args
-        #cmd += ["-v"]
-        cmd += ["--no-deps"]
-        result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
-        if result.return_code:
-            fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
-        result = repository_ctx.execute(["sh", "-c", "ls ./%s-*.whl" % repository_ctx.attr.requirement.replace("==", "-")])
-        if result.return_code:
-            fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
-        whl = result.stdout.strip()
-    else:
-        fail("neither requirement nor whl attribute provided")
+    root = str(repository_ctx.path("../..")) + '/'
+    pythonpath = ':'.join([root + dep.workspace_root for dep in repository_ctx.attr.buildtime_deps])
+    cmd = [
+        "python",
+        repository_ctx.path(repository_ctx.attr._piptool),
+        "resolve",
+        "--name", repository_ctx.attr.name,
+        "--directory", repository_ctx.path(""),
+    ]
+    cmd += ["--", repository_ctx.attr.requirement]
+    cmd += repository_ctx.attr.pip_args
+    #cmd += ["-v"]
+    cmd += ["--no-deps"]
+    result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
+    if result.return_code:
+        fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
+    result = repository_ctx.execute(["sh", "-c", "ls ./%s-*.whl" % repository_ctx.attr.requirement.replace("==", "-")])
+    if result.return_code:
+        fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
+    whl = result.stdout.strip()
 
     args = [
         "python",
@@ -52,18 +63,14 @@ def _whl_impl(repository_ctx):
         "--repository", repository_ctx.attr.repository,
     ]
 
-    if whl:
-        args += ["--whl", whl]
+    args += ["--whl", whl]
 
     if repository_ctx.attr.additional_runtime_deps:
         for d in repository_ctx.attr.additional_runtime_deps:
             args += ["--add-dependency", d]
 
     if repository_ctx.attr.extras:
-        args += [
-        "--extras=%s" % extra
-        for extra in repository_ctx.attr.extras
-        ]
+        args += ["--extras=%s" % extra for extra in repository_ctx.attr.extras]
 
     print(args)
     result = repository_ctx.execute(args, quiet=False)
@@ -96,34 +103,11 @@ whl_library = repository_rule(
 )
 
 
-
-
-def _extract_wheels_impl(repository_ctx):
+def _extract_wheels_impl(ctx):
     """Core implementation of extract_wheels."""
-
-    args = [
-        "python",
-        repository_ctx.path(repository_ctx.attr._piptool),
-        "unpack",
-        "--directory", str(repository_ctx.path("")),
-        "--repository", repository_ctx.attr.repository,
-    ]
-
-    for w in repository_ctx.attr.wheels:
-        repository_ctx.symlink(w, w.name)
-        args += ["--whl", repository_ctx.path(w)]
-
-    if repository_ctx.attr.additional_runtime_deps:
-        for d in repository_ctx.attr.additional_runtime_deps:
-            args += ["--add-dependency", d]
-
-    if repository_ctx.attr.extras:
-        args += ["--extras=%s" % extra for extra in repository_ctx.attr.extras]
-
-    print(args)
-    result = repository_ctx.execute(args, quiet=False)
-    if result.return_code:
-        fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
+    for w in ctx.attr.wheels:
+        ctx.symlink(w, w.name)
+    _extract_wheels(ctx, [ctx.path(w) for w in ctx.attr.wheels])
 
 extract_wheels = repository_rule(
     attrs = {
