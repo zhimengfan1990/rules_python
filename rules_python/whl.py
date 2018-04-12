@@ -186,7 +186,7 @@ def unpack(args):
       imports.append(purelib_path)
 
   wheel_map = {w.distribution(): w for w in whls}
-  external_deps = [for d in itertools.chain(whl.dependencies(), extra_deps) if d not in wheel_map]
+  external_deps = [d for d in itertools.chain(whl.dependencies(), extra_deps) if d not in wheel_map]
 
   with open(os.path.join(args.directory, 'BUILD'), 'w') as f:
     f.write("""

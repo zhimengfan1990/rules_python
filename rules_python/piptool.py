@@ -346,9 +346,6 @@ parser.add_argument('--directory', action='store', default='.',
 parser.add_argument('--extras', action='append',
                     help='The set of extras for which to generate library targets.')
 
-parser.add_argument('--dirty', action='store_true',
-                    help='TODO')
-
 def main():
   args = global_parser.parse_args()
   args.func(args)

@@ -33,8 +33,7 @@ def _whl_impl(repository_ctx):
         cmd += ["--", repository_ctx.attr.requirement]
         cmd += repository_ctx.attr.pip_args
         #cmd += ["-v"]
-        if not repository_ctx.attr.dirty:
-            cmd += ["--no-deps"]
+        cmd += ["--no-deps"]
         result = repository_ctx.execute(cmd, quiet=False, environment={'PYTHONPATH': pythonpath})
         if result.return_code:
             fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
@@ -65,11 +64,6 @@ def _whl_impl(repository_ctx):
         "--extras=%s" % extra
         for extra in repository_ctx.attr.extras
         ]
-
-    if repository_ctx.attr.dirty:
-        args += ['--dirty']
-        for w in repository_ctx.attr.buildtime_deps:
-            args += ["--whl", repository_ctx.path(w)]
 
     print(args)
     result = repository_ctx.execute(args, quiet=False)
