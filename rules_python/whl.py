@@ -130,48 +130,9 @@ class Wheel(object):
   def extras(self):
     return self.metadata().get('extras', [])
 
-  def _expand_single(self, directory):
+  def expand(self, directory):
     with zipfile.ZipFile(self.path(), 'r') as whl:
       whl.extractall(directory)
-
-  # TODO(conrado): add support for initial extra not being empty (from pip)
-  # TODO(conrado): add support for extra dependencies
-  def _expand_recursive(self, directory, wheel_map, extracted={}, extra=None):
-    self._expand_single(directory)
-
-    for d in self.dependencies(extra):
-        d = d.replace('-', '_')
-        e = None
-        if '[' in d:
-            d, e = d.split('[')
-            e = e[:-1]
-        if (d, e) not in extracted:
-            extracted[(d,e)] = True
-            wheel_map[d]._expand_recursive(directory, wheel_map, extracted, e)
-
-  def expand(self, directory, dirty=False):
-    if dirty:
-        wheel_folder = os.path.dirname(self.path())
-        # Enumerate the .whl files we downloaded.
-        def list_whls(dir):
-          for root, unused_dirnames, filenames in os.walk(dir):
-            for fname in filenames:
-              if fname.endswith('.whl'):
-                yield os.path.join(root, fname)
-
-        wheels = [Wheel(path) for path in list_whls(wheel_folder)]
-        wheel_map = {w.distribution(): w for w in wheels}
-
-        extracted = {}
-        self._expand_recursive(directory, wheel_map, extracted)
-
-        for root, dirs, files in os.walk(directory):
-            if '__init__.py' not in files:
-                with open(os.path.join(root, '__init__.py'), 'w') as f:
-                    pass
-    else:
-        self._expand_single(directory)
-
 
   # _parse_metadata parses METADATA files according to https://www.python.org/dev/peps/pep-0314/
   def _parse_metadata(self, content):
@@ -217,12 +178,15 @@ def unpack(args):
   # wheel repos
   for w in whls:
     print("Expanding", w, args.directory)
-    w.expand(args.directory, False)
+    w.expand(args.directory)
 
   imports = ['.']
   purelib_path = os.path.join(args.directory, '%s-%s.data' % (whl.distribution(), whl.version()), 'purelib')
   if os.path.isdir(purelib_path):
       imports.append(purelib_path)
+
+  wheel_map = {w.distribution(): w for w in whls}
+  external_deps = [for d in itertools.chain(whl.dependencies(), extra_deps) if d not in wheel_map]
 
   with open(os.path.join(args.directory, 'BUILD'), 'w') as f:
     f.write("""
@@ -250,8 +214,8 @@ py_library(
   repository=args.repository,
   dependencies=''.join([
     '\n        requirement("%s"),' % d
-    for d in itertools.chain(whl.dependencies(), extra_deps)
-  ]) if not args.dirty else '',
+    for d in external_deps
+  ]),
   imports=','.join(map(lambda i: '"%s"' % i, imports)),
   extras='\n\n'.join([
     """py_library(

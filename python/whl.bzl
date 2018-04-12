@@ -102,6 +102,53 @@ whl_library = repository_rule(
 )
 
 
+
+
+def _extract_wheels_impl(repository_ctx):
+    """Core implementation of extract_wheels."""
+
+    args = [
+        "python",
+        repository_ctx.path(repository_ctx.attr._piptool),
+        "unpack",
+        "--directory", str(repository_ctx.path("")),
+        "--repository", repository_ctx.attr.repository,
+    ]
+
+    for w in repository_ctx.attr.wheels:
+        repository_ctx.symlink(w, w.name)
+        args += ["--whl", repository_ctx.path(w)]
+
+    if repository_ctx.attr.additional_runtime_deps:
+        for d in repository_ctx.attr.additional_runtime_deps:
+            args += ["--add-dependency", d]
+
+    if repository_ctx.attr.extras:
+        args += ["--extras=%s" % extra for extra in repository_ctx.attr.extras]
+
+    print(args)
+    result = repository_ctx.execute(args, quiet=False)
+    if result.return_code:
+        fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
+
+extract_wheels = repository_rule(
+    attrs = {
+        "wheels": attr.label_list(
+            allow_files = True,
+        ),
+        "additional_runtime_deps": attr.string_list(),
+        "repository":  attr.string(),
+        "extras": attr.string_list(),
+        "_piptool": attr.label(
+            executable = True,
+            default = Label("//tools:piptool.par"),
+            cfg = "host",
+        ),
+    },
+    implementation = _extract_wheels_impl,
+)
+
+
 """A rule for importing <code>.whl</code> dependencies into Bazel.
 
 <b>This rule is currently used to implement <code>pip_import</code>,
