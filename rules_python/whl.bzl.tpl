@@ -44,15 +44,10 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, 
             )
 
     if dirty_name not in native.existing_rules():
-        _whl_library(
+        extract_wheels(
             name = dirty_name,
-            dirty = True,
-            requirement = None,
-            repository = "%{repo}",
-            buildtime_deps = _wheels(wheels_map, buildtime_deps + runtime_deps),
+            wheels = [_wheel(wheels_map, key)] + _wheels(wheels_map, runtime_deps),
             additional_runtime_deps = additional_runtime_deps,
-            whl = whl or _wheel(wheels_map, key),
-            whl_name = whl_name,
+            repository = "%{repo}",
             extras = extras,
-            pip_args = [%{pip_args}],
         )
