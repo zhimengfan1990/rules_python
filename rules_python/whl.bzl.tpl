@@ -15,11 +15,12 @@ def _wheel(wheels_map, name):
 def _wheels(wheels_map, names):
   return [_wheel(wheels_map, n) for n in names]
 
-def whl_library(name, wheels_map={}, requirement=None, whl=None, whl_name=None, runtime_deps=[], extras=[]):
+def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[], extras=[]):
     dirty_name = "%s_dirty" % name
     key = requirement.split("==")[0]
     buildtime_deps = _buildtime_deps.get(key, [])
     additional_runtime_deps = _runtime_deps.get(key, [])
+    wheel_name = _wheel(wheels_map, key).split(":")[1]
     if name not in native.existing_rules():
         if whl:
             extract_wheels(

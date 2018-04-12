@@ -208,9 +208,7 @@ def resolve(args):
   def whl_library(wheel):
     attrs = {"name": quote(wheel.repository_name(scope))}
     attrs["requirement"] = '"{}=={}"'.format(wheel.distribution(), wheel.version())
-    if args.output_format == 'download':
-      attrs["whl_name"] = quote(wheel.basename())
-    else:
+    if args.output_format != 'download':
       attrs["whl"] = '"@{}//:{}"'.format(args.name, wheel.basename())
     extras = ', '.join([quote(extra) for extra in possible_extras.get(wheel, [])])
     if extras != '':
