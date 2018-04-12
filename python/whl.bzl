@@ -25,6 +25,8 @@ def _extract_wheels(ctx, wheels):
     args += ["--whl=%s" % w for w in wheels]
     args += ["--add-dependency=%s" % d for d in ctx.attr.additional_runtime_deps]
     args += ["--extras=%s" % extra for extra in ctx.attr.extras]
+    if len(ctx.attr.alias_namespaces) > 0:
+        args += ["--add-dependency=@%s//:site" % ctx.attr.repository]
 
     print(args)
     result = ctx.execute(args, quiet=False)
@@ -67,6 +69,7 @@ download_or_build_wheel = repository_rule(
         "repository":  attr.string(),
         "extras": attr.string_list(),
         "pip_args": attr.string_list(),
+        "alias_namespaces": attr.string_list(),
         "_piptool": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),
@@ -91,6 +94,7 @@ extract_wheels = repository_rule(
         "additional_runtime_deps": attr.string_list(),
         "repository":  attr.string(),
         "extras": attr.string_list(),
+        "alias_namespaces": attr.string_list(),
         "_piptool": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

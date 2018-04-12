@@ -19,6 +19,9 @@ def expand_deps(d):
 def expand_deps_to_dict(d):
     return "".join(['\n    "{}": [{}],'.format(k, ", ".join(['"{}"'.format(v) for v in vv])) for k, vv in d.items()])
 
+def expand_array(array):
+    return "".join(['\n    "{}",'.format(item) for item in array])
+
 def _pip_import_impl(repository_ctx):
   """Core implementation of pip_import."""
 
@@ -52,6 +55,7 @@ sh_binary(
       "%{requirements}": str(repository_ctx.attr.requirements_bzl),
       "%{additional_buildtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
       "%{additional_runtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
+      "%{alias_namespaces}": expand_array(repository_ctx.attr.alias_namespaces),
     })
 
   repository_ctx.template(
@@ -116,7 +120,7 @@ pip_import = repository_rule(
         "pip_args": attr.string_list(),
         "additional_buildtime_deps": attr.string_list_dict(),
         "additional_runtime_deps": attr.string_list_dict(),
-        "alias_namespaces": attr.string_list(default=["google"]),
+        "alias_namespaces": attr.string_list(),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

@@ -206,14 +206,14 @@ py_library(
     # search path for anything that depends on this.
     imports = [{imports}],
     deps = [
-        "@{repository}//:site",{dependencies}
+        {dependencies}
     ],
 )
 {extras}""".format(
   wheel = whl.basename(),
   repository=args.repository,
   dependencies=''.join([
-    '\n        requirement("%s"),' % d
+    ('\n        "%s",' % d) if d[0] == "@" else ('\n        requirement("%s"),' % d)
     for d in external_deps
   ]),
   imports=','.join(map(lambda i: '"%s"' % i, imports)),
@@ -226,7 +226,7 @@ py_library(
 )""".format(extra=extra,
             deps=','.join([
                 'requirement("%s")' % dep
-                for dep in itertools.chain(whl.dependencies(extra), extra_deps)
+                for dep in whl.dependencies(extra)
             ]))
     for extra in args.extras or []
   ])))
