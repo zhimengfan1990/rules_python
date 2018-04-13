@@ -3,8 +3,6 @@ set -e
 
 REQUIREMENTS_TXT="%{requirements_txt}"
 REQUIREMENTS_BZL="%{requirements_bzl}"
-RUNTIME_FIX="%{runtime_fix}"
-BUILDTIME_FIX="%{buildtime_fix}"
 BUILD_AREA="%{directory}/build"
 
 if [ -z "$REQUIREMENTS_BZL" ]; then
@@ -19,8 +17,6 @@ python "%{piptool}" resolve \
     --name "%{name}" \
     --input "$REQUIREMENTS_TXT" \
     --output "$REQUIREMENTS_BZL_TEMP" \
-    --runtime-fix $RUNTIME_FIX \
-    --buildtime-fix $BUILDTIME_FIX \
     --output-format download \
     --directory $BUILD_AREA -- %{pip_args}
 

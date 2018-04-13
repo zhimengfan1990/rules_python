@@ -43,8 +43,6 @@ sh_binary(
 """)
 
   repository_ctx.file("python/BUILD", "")
-  repository_ctx.file("runtime-fix.txt", expand_deps(repository_ctx.attr.additional_runtime_deps))
-  repository_ctx.file("buildtime-fix.txt", expand_deps(repository_ctx.attr.additional_buildtime_deps))
   repository_ctx.template(
     "python/whl.bzl",
     Label("//rules_python:whl.bzl.tpl"),
@@ -73,8 +71,6 @@ sh_binary(
       "%{name}": repository_ctx.attr.name,
       "%{requirements_txt}": str(repository_ctx.path(repository_ctx.attr.requirements)),
       "%{requirements_bzl}": str(repository_ctx.path(repository_ctx.attr.requirements_bzl)) if repository_ctx.attr.requirements_bzl else "",
-      "%{runtime_fix}": str(repository_ctx.path("runtime-fix.txt")),
-      "%{buildtime_fix}": str(repository_ctx.path("buildtime-fix.txt")),
       "%{directory}": str(repository_ctx.path("")),
       "%{pip_args}": " ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
     },
