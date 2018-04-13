@@ -164,7 +164,6 @@ class Wheel(object):
     }
 
 def unpack(args):
-  print(args)
   whls = [Wheel(w) for w in args.whl]
   whl = whls[0]
 

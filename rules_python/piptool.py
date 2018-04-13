@@ -20,6 +20,7 @@ import os
 import pkgutil
 import pkg_resources
 import re
+import requests
 import shutil
 import sys
 import tempfile
@@ -136,13 +137,7 @@ def determine_possible_extras(whls):
     for whl in whls
   }
 
-def resolve(args):
-  #cache_dir = os.path.join(args.directory or ".", "cache")
-  #os.makedirs(cache_dir)
-  cache_base = os.environ.get("BAZEL_WHEEL_CACHE")
-  if cache_base:
-    print("GET {}/{}".format(cache_base, args.cache_key))
-
+def build_wheel(args):
   pip_args = ["wheel"]
   #pip_args += ["--cache-dir", cache_dir]
   if args.directory:
@@ -159,6 +154,38 @@ def resolve(args):
   if pip_main(pip_args):
     sys.exit(1)
 
+  cache_url = get_cache_url(args)
+  if cache_url:
+    wheel_filename = os.path.join(args.directory, cache_url.split('/')[-1])
+    with open(wheel_filename, 'rb') as f:
+      r = requests.put(cache_url, data=f.read())
+
+def get_cache_url(args):
+  cache_base = os.environ.get("BAZEL_WHEEL_CACHE")
+  if not cache_base or not args.cache_key:
+    return None
+  return "http://{}/{}".format(cache_base, args.cache_key)
+
+def resolve(args):
+  cache_url = get_cache_url(args)
+
+  if cache_url:
+    r = requests.get(cache_url)
+    if r.status_code in [404]:
+      build_wheel(args)
+    else:
+      r.raise_for_status()
+      wheel_filename = os.path.join(args.directory, cache_url.split('/')[-1])
+      with open(wheel_filename, 'w') as f:
+        for chunk in r.iter_content(chunk_size=128):
+          f.write(chunk)
+      print("Downloaded %s" % cache_url)
+  else:
+    build_wheel(args)
+
+  if not args.output:
+    return
+
   # Enumerate the .whl files we downloaded.
   def list_whls(dir):
     for root, _, filenames in os.walk(dir + "/"):
@@ -173,9 +200,6 @@ def resolve(args):
 
   whls = wheels_from_dir(args.directory)
   possible_extras = determine_possible_extras(whls)
-
-  if not args.output:
-    return
 
   def quote(string):
     return '"{}"'.format(string)

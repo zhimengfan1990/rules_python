@@ -43,7 +43,6 @@ sh_binary(
 """)
 
   repository_ctx.file("python/BUILD", "")
-  print(repository_ctx.attr.additional_runtime_deps)
   repository_ctx.file("runtime-fix.txt", expand_deps(repository_ctx.attr.additional_runtime_deps))
   repository_ctx.file("buildtime-fix.txt", expand_deps(repository_ctx.attr.additional_buildtime_deps))
   repository_ctx.template(

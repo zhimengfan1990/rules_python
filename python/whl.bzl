@@ -42,7 +42,6 @@ def _download_or_build_wheel_impl(ctx):
     """Core implementation of whl_library."""
 
     hash_input = ':'.join([dep.name for dep in ctx.attr.buildtime_deps])
-    print("Hash input: %s" % hash_input)
     cmd = [
         "python",
         "-c",
