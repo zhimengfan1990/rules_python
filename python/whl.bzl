@@ -90,6 +90,7 @@ download_or_build_wheel = repository_rule(
         ),
     },
     implementation = _download_or_build_wheel_impl,
+    environ = ["BAZEL_WHEEL_CACHE"],
 )
 
 

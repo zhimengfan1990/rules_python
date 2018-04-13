@@ -139,6 +139,10 @@ def determine_possible_extras(whls):
 def resolve(args):
   #cache_dir = os.path.join(args.directory or ".", "cache")
   #os.makedirs(cache_dir)
+  cache_base = os.environ.get("BAZEL_WHEEL_CACHE")
+  if cache_base:
+    print("GET {}/{}".format(cache_base, args.cache_key))
+
   pip_args = ["wheel"]
   #pip_args += ["--cache-dir", cache_dir]
   if args.directory:
