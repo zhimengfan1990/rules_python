@@ -170,25 +170,6 @@ def resolve(args):
   whls = wheels_from_dir(args.directory)
   possible_extras = determine_possible_extras(whls)
 
-  def parse_fix(filename):
-      with open(filename, 'r') as f:
-          lines = f.readlines()
-          for line in lines:
-              items = line.strip().split(' ')
-              main_ref = items[0]
-              others = items[1:]
-              for w in whls:
-                  if w.distribution().lower() == main_ref.replace('-', '_').lower():
-                      yield w, others
-                      break
-
-  if args.buildtime_fix:
-    for w, deps in parse_fix(args.buildtime_fix):
-      w.add_extra_buildtime_deps(deps)
-  if args.runtime_fix:
-    for w, deps in parse_fix(args.runtime_fix):
-      w.add_extra_runtime_deps(deps)
-
   if not args.output:
     return
 
@@ -213,17 +194,9 @@ def resolve(args):
     extras = ', '.join([quote(extra) for extra in possible_extras.get(wheel, [])])
     if extras != '':
       attrs["extras"] = '[{}]'.format(extras)
-    # Hopefully these are not needed and we can use requirements-fix.txt ONLY
-    # for ensuring build-time deps!
     runtime_deps = ', '.join([quote(dep) for dep in wheel.dependencies()])
     if runtime_deps != '':
       attrs["runtime_deps"] = '[{}]'.format(runtime_deps)
-    #additional_runtime_deps = ', '.join([quote(extra) for extra in wheel.get_extra_runtime_deps()])
-    #if additional_runtime_deps != '':
-    #  attrs["additional_runtime_deps"] = '[{}]'.format(additional_runtime_deps)
-    #buildtime_deps = ', '.join([quote(dep) for dep in wheel.get_extra_buildtime_deps()])
-    #if buildtime_deps != '':
-    #  attrs["buildtime_deps"] = '[{}]'.format(buildtime_deps)
 
     # Indentation here matters.  whl_library must be within the scope
     # of the function below.  We also avoid reimporting an existing WHL.
@@ -301,15 +274,6 @@ parser.add_argument('--name', action='store',
 parser.add_argument('--input', action='store',
                     help=('The requirements.txt file to import.'))
 
-parser.add_argument('--input-fix', action='store',
-                    help=('The requirements-fix.txt file to import.'))
-
-parser.add_argument('--runtime-fix', action='store',
-                    help=('Additional runtime dependencies.'))
-
-parser.add_argument('--buildtime-fix', action='store',
-                    help=('Additional buildtime dependencies.'))
-
 parser.add_argument('--constraint', action='store',
                     help=('An optional constraints file to pass to "pip wheel" command.'))
 
@@ -321,6 +285,9 @@ parser.add_argument('--output-format', choices=['refer', 'download'], default='r
 
 parser.add_argument('--directory', action='store',
                     help=('The directory into which to put .whl files.'))
+
+parser.add_argument('--cache-key', action='store',
+                    help=('The cache key to use when looking up .whl file from cache.'))
 
 parser.add_argument('args', nargs=argparse.REMAINDER,
                     help=('Extra arguments to send to pip.'))

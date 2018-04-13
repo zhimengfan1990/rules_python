@@ -13,6 +13,12 @@
 # limitations under the License.
 """Import .whl files into Bazel."""
 
+load(
+    "@bazel_tools//tools/build_defs/hash:hash.bzl",
+    _hash_tools = "tools",
+    _sha256 = "sha256",
+)
+
 def _extract_wheels(ctx, wheels):
     args = [
         "python",
@@ -28,13 +34,24 @@ def _extract_wheels(ctx, wheels):
     if len(ctx.attr.alias_namespaces) > 0:
         args += ["--add-dependency=@%s//:site" % ctx.attr.repository]
 
-    print(args)
     result = ctx.execute(args, quiet=False)
     if result.return_code:
         fail("extract_wheels failed: %s (%s)" % (result.stdout, result.stderr))
 
 def _download_or_build_wheel_impl(ctx):
     """Core implementation of whl_library."""
+
+    hash_input = ':'.join([dep.name for dep in ctx.attr.buildtime_deps])
+    print("Hash input: %s" % hash_input)
+    cmd = [
+        "python",
+        "-c",
+        "import hashlib; print(hashlib.sha256('%s').hexdigest())" % hash_input,
+    ]
+    result = ctx.execute(cmd)
+    if result.return_code:
+        fail("pip wheel failed: %s (%s)" % (result.stdout, result.stderr))
+    cache_key = "%s/%s" % (result.stdout.strip(), ctx.attr.wheel_name)
 
     root = str(ctx.path("../..")) + '/'
     pythonpath = ':'.join([root + dep.workspace_root for dep in ctx.attr.buildtime_deps])
@@ -44,6 +61,7 @@ def _download_or_build_wheel_impl(ctx):
         "resolve",
         "--name", ctx.attr.name,
         "--directory", ctx.path(""),
+        "--cache-key", cache_key,
     ]
     cmd += ["--", ctx.attr.requirement]
     cmd += ctx.attr.pip_args
@@ -55,9 +73,7 @@ def _download_or_build_wheel_impl(ctx):
     result = ctx.execute(["sh", "-c", "ls ./%s-*.whl" % ctx.attr.requirement.replace("==", "-")])
     if result.return_code:
         fail("whl not found: %s (%s)" % (result.stdout, result.stderr))
-    whl = result.stdout.strip()
-
-    _extract_wheels(ctx, [whl])
+    ctx.file("BUILD", "")
 
 download_or_build_wheel = repository_rule(
     attrs = {
@@ -65,11 +81,8 @@ download_or_build_wheel = repository_rule(
         "buildtime_deps": attr.label_list(
             allow_files=["*.whl"],
         ),
-        "additional_runtime_deps": attr.string_list(),
-        "repository":  attr.string(),
-        "extras": attr.string_list(),
+        "wheel_name": attr.string(),
         "pip_args": attr.string_list(),
-        "alias_namespaces": attr.string_list(),
         "_piptool": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

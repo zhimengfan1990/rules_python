@@ -19,7 +19,8 @@ def _wheels(wheels_map, names):
 
 def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[], extras=[]):
     repository = "%{repo}"
-    dirty_name = "%s_dirty" % name
+    dirty_repo_name = "%s_dirty" % name
+    wheel_repo_name = "%s_wheel" % name
     key = requirement.split("==")[0]
     buildtime_deps = _additional_buildtime_deps.get(key, [])
     additional_runtime_deps = _additional_runtime_deps.get(key, [])
@@ -36,19 +37,24 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[]
             )
         else:
             download_or_build_wheel(
-                name = name,
+                name = wheel_repo_name,
                 requirement = requirement,
-                repository = "%{repo}",
+                wheel_name = wheel_name,
                 buildtime_deps = _wheels(wheels_map, buildtime_deps),
-                additional_runtime_deps = additional_runtime_deps,
-                extras = extras,
-                alias_namespaces = _alias_namespaces,
                 pip_args = [%{pip_args}],
             )
+            extract_wheels(
+                name = name,
+                wheels = ["@%s//:%s" % (wheel_repo_name, wheel_name)],
+                additional_runtime_deps = additional_runtime_deps,
+                repository = "%{repo}",
+                extras = extras,
+                alias_namespaces = _alias_namespaces,
+            )
 
-    if dirty_name not in native.existing_rules():
+    if dirty_repo_name not in native.existing_rules():
         extract_wheels(
-            name = dirty_name,
+            name = dirty_repo_name,
             wheels = [_wheel(wheels_map, key)] + _wheels(wheels_map, runtime_deps),
             additional_runtime_deps = additional_runtime_deps,
             repository = "%{repo}",
