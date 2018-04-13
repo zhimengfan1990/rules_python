@@ -158,7 +158,13 @@ def build_wheel(args):
   if cache_url:
     wheel_filename = os.path.join(args.directory, cache_url.split('/')[-1])
     with open(wheel_filename, 'rb') as f:
-      r = requests.put(cache_url, data=f.read())
+      try:
+        r = requests.put(cache_url, data=f.read())
+        if r.status_code == requests.codes.ok:
+          print("Uploaded {}".format(cache_url))
+      except requests.exceptions.ConnectionError:
+        # Probably no access to write to the cache
+        pass
 
 def get_cache_url(args):
   cache_base = os.environ.get("BAZEL_WHEEL_CACHE")
@@ -171,7 +177,9 @@ def resolve(args):
 
   if cache_url:
     r = requests.get(cache_url)
-    if r.status_code in [404]:
+    # 404 (not found) means cache miss
+    # 502 (bad gateway) usually means the proxy dropped the request (e.g. no access to cache)
+    if r.status_code in [404, 502]:
       build_wheel(args)
     else:
       r.raise_for_status()
@@ -179,7 +187,7 @@ def resolve(args):
       with open(wheel_filename, 'w') as f:
         for chunk in r.iter_content(chunk_size=128):
           f.write(chunk)
-      print("Downloaded %s" % cache_url)
+      print("Downloaded {}".format(cache_url))
   else:
     build_wheel(args)
 

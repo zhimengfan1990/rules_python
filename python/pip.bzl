@@ -13,13 +13,10 @@
 # limitations under the License.
 """Import pip requirements into Bazel."""
 
-def expand_deps(d):
-    return "\n".join(["{} {}".format(k, " ".join([v for v in vv])) for k, vv in d.items()])
-
-def expand_deps_to_dict(d):
+def _expand_deps_to_dict(d):
     return "".join(['\n    "{}": [{}],'.format(k, ", ".join(['"{}"'.format(v) for v in vv])) for k, vv in d.items()])
 
-def expand_array(array):
+def _expand_array(array):
     return "".join(['\n    "{}",'.format(item) for item in array])
 
 def _pip_import_impl(repository_ctx):
@@ -50,9 +47,9 @@ sh_binary(
       "%{repo}": repository_ctx.name,
       "%{pip_args}": ", ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
       "%{requirements}": str(repository_ctx.attr.requirements_bzl),
-      "%{additional_buildtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
-      "%{additional_runtime_deps}": expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
-      "%{alias_namespaces}": expand_array(repository_ctx.attr.alias_namespaces),
+      "%{additional_buildtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
+      "%{additional_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
+      "%{alias_namespaces}": _expand_array(repository_ctx.attr.alias_namespaces),
     })
 
   repository_ctx.template(
