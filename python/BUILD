@@ -20,3 +20,9 @@ exports_files([
     "python.bzl",
     "whl.bzl",
 ])
+
+py_library(
+    name = "site",
+    srcs = [":sitecustomize.py"],
+    imports = ".",
+)

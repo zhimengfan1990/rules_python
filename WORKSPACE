@@ -162,6 +162,7 @@ pip_import(
         "scikit-learn": ["scipy", "numpy"],
         "pip": ["docutils"],
     },
+    alias_namespaces = ["google"],
 )
 
 load(

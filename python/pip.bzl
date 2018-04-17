@@ -28,6 +28,11 @@ def _pip_import_impl(repository_ctx):
   # requirements.bzl without it.
   repository_ctx.file("BUILD", """
 package(default_visibility = ["//visibility:public"])
+py_library(
+    name = "site",
+    srcs = [":sitecustomize.py"],
+    imports = ["."],
+)
 sh_binary(
     name = "update",
     srcs = ["update.sh"],
@@ -44,7 +49,16 @@ sh_binary(
       "%{requirements}": str(repository_ctx.attr.requirements_bzl),
       "%{additional_buildtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
       "%{additional_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
+      "%{alias_namespaces}": _expand_array(repository_ctx.attr.alias_namespaces),
     })
+
+  repository_ctx.template(
+    "sitecustomize.py",
+    Label("//rules_python:sitecustomize.py.tpl"),
+    substitutions = {
+      "%{modules}": "".join(["\n    '%s'," % n for n in repository_ctx.attr.alias_namespaces]),
+    },
+  )
 
   repository_ctx.template(
     "update.sh",
@@ -90,6 +104,7 @@ pip_import = repository_rule(
         "pip_args": attr.string_list(),
         "additional_buildtime_deps": attr.string_list_dict(),
         "additional_runtime_deps": attr.string_list_dict(),
+        "alias_namespaces": attr.string_list(),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:piptool.par"),

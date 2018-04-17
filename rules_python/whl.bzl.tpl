@@ -4,6 +4,8 @@ _additional_buildtime_deps = {%{additional_buildtime_deps}
 }
 _additional_runtime_deps = {%{additional_runtime_deps}
 }
+_alias_namespaces = [%{alias_namespaces}
+]
 
 def _wheel(wheels_map, name):
   name_key = name.split("[")[0] # Strip extra
@@ -30,6 +32,7 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[]
                 additional_runtime_deps = additional_runtime_deps,
                 repository = "%{repo}",
                 extras = extras,
+                alias_namespaces = _alias_namespaces,
             )
         else:
             download_or_build_wheel(
@@ -45,6 +48,7 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[]
                 additional_runtime_deps = additional_runtime_deps,
                 repository = "%{repo}",
                 extras = extras,
+                alias_namespaces = _alias_namespaces,
             )
 
     if dirty_repo_name not in native.existing_rules():
@@ -54,4 +58,5 @@ def whl_library(name, wheels_map={}, requirement=None, whl=None, runtime_deps=[]
             additional_runtime_deps = additional_runtime_deps,
             repository = "%{repo}",
             extras = extras,
+            alias_namespaces = _alias_namespaces,
         )
