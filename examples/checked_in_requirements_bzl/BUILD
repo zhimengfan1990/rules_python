@@ -26,7 +26,7 @@ py_test(
         #requirement("cryptography"),
         #requirement("entrypoints"),
         #requirement("google-cloud:dirty"),
-        #requirement("scikit-learn"),
+        requirement("scikit-learn"),
         #requirement("pycuda"),
         requirement("botocore"),
     ],
