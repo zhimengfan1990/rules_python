@@ -34,6 +34,11 @@ def _pip_import_impl(repository_ctx):
   # requirements.bzl without it.
   repository_ctx.file("BUILD", """
 package(default_visibility = ["//visibility:public"])
+py_library(
+    name = "site",
+    srcs = [":sitecustomize.py"],
+    imports = ["."],
+)
 sh_binary(
     name = "update",
     srcs = ["update.sh"],
@@ -53,8 +58,17 @@ sh_binary(
       "%{additional_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
       "%{additional_build_content}": _expand_build_deps_to_dict(repository_ctx.attr.additional_build_content),
       "%{remove_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.remove_runtime_deps),
+      "%{alias_namespaces}": _expand_array(repository_ctx.attr.alias_namespaces),
       "%{patch_runtime}": _expand_deps_to_dict(repository_ctx.attr.patch_runtime),
     })
+
+  repository_ctx.template(
+    "sitecustomize.py",
+    Label("//rules_python:sitecustomize.py.tpl"),
+    substitutions = {
+      "%{modules}": "".join(["\n    '%s'," % n for n in repository_ctx.attr.alias_namespaces]),
+    },
+  )
 
   repository_ctx.template(
     "update.sh",
@@ -106,6 +120,7 @@ pip_import = repository_rule(
         "additional_runtime_deps": attr.string_list_dict(),
         "additional_build_content": attr.string_dict(),
         "remove_runtime_deps": attr.string_list_dict(),
+        "alias_namespaces": attr.string_list(),
         "patch_runtime": attr.string_list_dict(),
         "python": attr.label(
             executable = True,

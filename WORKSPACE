@@ -180,6 +180,7 @@ pip_import(
         "keras-preprocessing": ["keras", "keras-preprocessing"],
         "keras": ["keras"],
     },
+    alias_namespaces = ["google", "backports"],
     python = "@python2//:bin/python",
 )
 

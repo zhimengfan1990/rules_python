@@ -35,6 +35,8 @@ def _extract_wheels(ctx, wheels):
     if ctx.attr.additional_build_content:
         args += ["--add-build-content=%s" % ctx.path(ctx.attr.additional_build_content)]
     args += ["--extras=%s" % extra for extra in ctx.attr.extras]
+    if len(ctx.attr.alias_namespaces) > 0:
+        args += ["--add-dependency=@%s//:site" % ctx.attr.repository]
 
     result = ctx.execute(args, quiet=False)
     if result.return_code:
@@ -195,6 +197,7 @@ extract_wheels = repository_rule(
         "additional_build_content":  attr.label(allow_single_file=True),
         "remove_runtime_deps": attr.string_list(),
         "patch_runtime": attr.label_list(allow_files=True),
+        "alias_namespaces": attr.string_list(),
         "repository":  attr.string(),
         "extras": attr.string_list(),
         "python": attr.label(

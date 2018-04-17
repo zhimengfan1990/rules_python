@@ -10,6 +10,8 @@ _additional_build_content = {%{additional_build_content}
 }
 _remove_runtime_deps = {%{remove_runtime_deps}
 }
+_alias_namespaces = [%{alias_namespaces}
+]
 _patch_runtime = {%{patch_runtime}
 }
 
@@ -56,6 +58,7 @@ def whl_library(key, all_libs, name, wheel_name, version=None, urls=None, whl=No
                 additional_build_content = additional_build_content,
                 remove_runtime_deps = remove_runtime_deps,
                 patch_runtime = patch_runtime,
+                alias_namespaces = _alias_namespaces,
                 repository = repository,
                 extras = extras,
                 python = python,
@@ -78,6 +81,7 @@ def whl_library(key, all_libs, name, wheel_name, version=None, urls=None, whl=No
                 additional_build_content = additional_build_content,
                 remove_runtime_deps = remove_runtime_deps,
                 patch_runtime = patch_runtime,
+                alias_namespaces = _alias_namespaces,
                 repository = repository,
                 extras = extras,
                 python = python,
@@ -102,6 +106,7 @@ def whl_library(key, all_libs, name, wheel_name, version=None, urls=None, whl=No
             additional_build_content = additional_build_content,
             remove_runtime_deps = remove_runtime_deps,
             patch_runtime = patch_runtime,
+            alias_namespaces = _alias_namespaces,
             repository = repository,
             extras = extras,
             python = python,
