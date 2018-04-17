@@ -63,7 +63,7 @@ def pip_install():
   )
 
   whl_library(
-    requirement = "python_dateutil==2.6.1",
+    requirement = "python-dateutil==2.6.1",
     name = "examples_checked_in_requirements_bzl__python_dateutil_2_6_1",
     runtime_deps = ["six"],
   )
