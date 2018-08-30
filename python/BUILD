@@ -21,3 +21,5 @@ exports_files([
     "whl.bzl",
     "__init__.py",
 ])
+
+toolchain_type(name = "toolchain")
