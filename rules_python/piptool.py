@@ -455,14 +455,15 @@ def pip_install():
   for key, attributes in all_libs.items():
     whl_library(
       key = key,
-      all_libs = all_libs,
+      all_libs = all_libs,{python}
       **attributes
     )
 
 """.format(comment='\n'.join(['# Generated from ' + i for i in args.input]),
            name=args.name,
            all_libs='\n    '.join(map(whl_library, whls)),
-           requirements_map=requirements_map))
+           requirements_map=requirements_map,
+           python='\n      python = "{}",'.format(args.python) if args.python else ''))
 
 parser = subparsers.add_parser('resolve', help='Resolve requirements.bzl from requirements.txt')
 parser.set_defaults(func=resolve)
@@ -481,6 +482,9 @@ parser.add_argument('--output-format', choices=['refer', 'download'], default='r
 
 parser.add_argument('--directory', action='store', default='.',
                     help=('The directory into which to put .whl files.'))
+
+parser.add_argument('--python', action='store', default="python",
+                    help=('The python interpreter to use for building wheels.'))
 
 parser.add_argument('args', nargs=argparse.REMAINDER,
                     help=('Extra arguments to send to pip.'))
