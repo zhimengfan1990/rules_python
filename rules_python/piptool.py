@@ -143,7 +143,7 @@ def build(args):
       with open(wheel_filename, 'w') as f:
         for chunk in r.iter_content(chunk_size=128):
           f.write(chunk)
-      print("Downloaded {}".format(cache_url))
+      sys.stderr.write("Downloaded {}\n".format(cache_url))
   else:
     build_wheel(args)
 
