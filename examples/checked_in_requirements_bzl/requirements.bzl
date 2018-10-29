@@ -655,7 +655,7 @@ def pip_install():
             "name": "examples_checked_in_requirements_bzl__psutil_5_4_7",
             "version": "5.4.7",
             "wheel_name": "psutil-5.4.7-cp27-cp27mu-linux_x86_64.whl",
-            "sha256": "4cda28565a32e224e1e1dc68e629440a950b5058f0d901df187404ce7e017cbb",
+            "sha256": "4f98da243784e6aa04f072dab4fe43f1e452e621bdfe3c40937fef8746117919",
             "extras": ["enum"],
         },
         "py": {
@@ -728,7 +728,7 @@ def pip_install():
             "name": "examples_checked_in_requirements_bzl__scandir_1_9_0",
             "version": "1.9.0",
             "wheel_name": "scandir-1.9.0-cp27-cp27mu-linux_x86_64.whl",
-            "sha256": "cb7b53e2908c3fe131bf791b106c45b5ecf205fb25df3910ae856538d09e395c",
+            "sha256": "b32c692b83b6e418fbf8f1f273ff360fe37b6e5e9772b7416fa889ebcf11b091",
         },
         "scikit-learn": {
             "name": "examples_checked_in_requirements_bzl__scikit_learn_0_17_1",

@@ -130,6 +130,7 @@ allow_hosts = ''
         "build",
         "--directory", ctx.path(""),
         "--cache-key", cache_key,
+        "--wheel-name", ctx.attr.wheel_name,
     ]
     cmd += ["--", ctx.attr.requirement]
     cmd += ctx.attr.pip_args

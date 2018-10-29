@@ -36,6 +36,13 @@ load("@io_bazel_skydoc//skylark:skylark.bzl", "skydoc_repositories")
 
 skydoc_repositories()
 
+http_archive(
+    name = "io_bazel_skylib",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/6e2d7e4a75b8ec0c307cf2ff2ca3d837633413ca.tar.gz"],
+    sha256 = "b18e43a101d620af173b3504faf4204b4ee0b97e1d05679bd0fec90c31a91eb9",
+    strip_prefix = "bazel-skylib-6e2d7e4a75b8ec0c307cf2ff2ca3d837633413ca",
+)
+
 # Python
 load("//:python/def.bzl", "python_toolchain_repository")
 python_toolchain_repository(
@@ -63,6 +70,19 @@ http_archive(
     urls = ["https://github.com/google/subpar/archive/07ff5feb7c7b113eea593eb6ec50b51099cf0261.tar.gz"],
     sha256 = "a694bd35ff4be79a49fbb6e5fd6b1c9083ef05cd752409f5fe349f6d74432fd8",
     strip_prefix = "subpar-07ff5feb7c7b113eea593eb6ec50b51099cf0261",
+)
+
+http_archive(
+    name = "stripzip",
+    urls = ["https://github.com/KittyHawkCorp/stripzip/archive/d55bce7ead2711328e2867adad28c908add62a3a.tar.gz"],
+    sha256 = "8b98451c18faf25aa09376bd941ae0d120ab617929c883ce220bc3fb521003ea",
+    strip_prefix = "stripzip-d55bce7ead2711328e2867adad28c908add62a3a",
+    build_file_content = """\
+cc_binary(
+    name = "stripzip",
+    srcs = ["src/stripzip_app.c", "src/err.h"],
+)
+"""
 )
 
 # Test data for WHL tool testing.
@@ -170,6 +190,8 @@ pip_import(
     additional_buildtime_deps = {
         "pycuda": ["numpy"],
         "pytest-mock": ["setuptools-scm"],
+        "scikit-learn": ["numpy"],
+        "scipy": ["numpy"],
     },
     additional_runtime_deps = {
         "scikit-learn": ["scipy", "numpy"],
@@ -180,6 +202,7 @@ pip_import(
         "keras-preprocessing": ["keras", "keras-preprocessing"],
         "keras": ["keras"],
     },
+    pip_args = ["--no-binary", ":all:"],
     python = "@python2//:bin/python",
 )
 

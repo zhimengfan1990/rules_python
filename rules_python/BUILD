@@ -22,6 +22,11 @@ py_library(
     srcs = ["whl.py"],
 )
 
+py_library(
+    name = "stripzip",
+    srcs = ["stripzip.py"],
+)
+
 py_test(
     name = "whl_test",
     srcs = ["whl_test.py"],
@@ -44,6 +49,7 @@ par_binary(
     name = "piptool",
     srcs = ["piptool.py"],
     deps = [
+        ":stripzip",
         ":whl",
         requirement("distlib"),
         requirement("pip"),

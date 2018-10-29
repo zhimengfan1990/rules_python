@@ -37,6 +37,7 @@ def whl_library(
     wheel_name,
     version = None,
     urls = None,
+    sha256 = None,
     local_path = None,
     whl = None,
     transitive_runtime_deps = None,

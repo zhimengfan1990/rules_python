@@ -85,6 +85,7 @@ def pip_main(argv):
     return pip._internal.main(argv)
 
 from rules_python.whl import Wheel
+from rules_python.stripzip import stripzip
 
 
 global_parser = argparse.ArgumentParser(
@@ -113,10 +114,12 @@ def build_wheel(args):
   if pip_main(pip_args):
     sys.exit(1)
 
+  # Strip timestamps from the zip file to make checksum deterministic.
+  stripzip(args.wheel_name)
+
   cache_url = get_cache_url(args)
   if cache_url:
-    wheel_filename = os.path.join(args.directory, cache_url.split('/')[-1])
-    with open(wheel_filename, 'rb') as f:
+    with open(args.wheel_name, 'rb') as f:
       try:
         r = requests.put(cache_url, data=f.read())
         if r.status_code == requests.codes.ok:
@@ -157,6 +160,9 @@ parser.add_argument('--directory', action='store', default='.',
 
 parser.add_argument('--cache-key', action='store',
                     help=('The cache key to use when looking up .whl file from cache.'))
+
+parser.add_argument('--wheel-name', action='store',
+                    help=('The filename of the wheel.'))
 
 parser.add_argument('args', nargs=argparse.REMAINDER,
                     help=('Extra arguments to send to pip.'))
@@ -444,7 +450,10 @@ def resolve(args):
       for root, _, filenames in os.walk(dir + "/"):
         for fname in filenames:
           if fname.endswith('.whl'):
-            yield Wheel(os.path.join(root, fname))
+            wheel_filename = os.path.join(root, fname)
+            # Strip timestamps from the zip file to make checksum deterministic.
+            stripzip(wheel_filename)
+            yield Wheel(wheel_filename)
     whls = list(list_whls(dir))
     whls.sort(key=lambda x: x.name())
     return whls
@@ -476,20 +485,17 @@ def resolve(args):
     # For determinism, avoid clashes with other pip_import repositories,
     # and prefix the current pip_import domain to the lib repo name.
     lib_repo = lambda w: w.repository_name(prefix=args.name)
-    # Each wheel has its own repository that, refer to that.
-    wheel_repo = lambda w: lib_repo(w) + '_wheel'
   else:
     # We are generating requirements.bzl to the bazel output area (legacy mode).
     # Use the good old 'pypi__' refix.
     lib_repo = lambda w: w.repository_name(prefix='pypi')
-    # Wheels are downloaded to the pip_import repository, refer to that.
-    wheel_repo = lambda w: args.name
 
   def whl_library(wheel):
     attrs = []
     attrs += [("name", quote(lib_repo(wheel)))]
     attrs += [("version", quote(wheel.version()))]
     attrs += [("wheel_name", quote(wheel.basename()))]
+    attrs += [("sha256", quote(wheel.sha256()))]
     url = requirement_download_url(wheel.basename())
     if url:
       attrs += [("urls", '[{}]'.format(quote(url)))]
@@ -498,9 +504,7 @@ def resolve(args):
     extras = ', '.join([quote(extra) for extra in sorted(possible_extras.get(wheel, []))])
     if extras != '':
       attrs += [("extras", '[{}]'.format(extras))]
-    runtime_deps = ', '.join([quote(dep) for dep in wheel.dependencies()])
-    #if runtime_deps != '':
-    #  attrs["runtime_deps"] = '[{}]'.format(runtime_deps)
+
     transitive_runtime_deps = set([split_extra(dep)[0] for dep in transitive_deps(wheel)])
     transitive_runtime_deps = ', '.join([quote(dep) for dep in sorted(transitive_runtime_deps)])
     if transitive_runtime_deps != '':

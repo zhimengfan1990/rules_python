@@ -32,15 +32,18 @@ def _pip_import_impl(repository_ctx):
   # This is because Bazel requires BUILD files along all paths accessed
   # via //this/sort/of:path and we wouldn't be able to load our generated
   # requirements.bzl without it.
-  repository_ctx.file("BUILD", """
+  repository_ctx.file("BUILD", """\
 package(default_visibility = ["//visibility:public"])
 sh_binary(
     name = "update",
     srcs = ["update.sh"],
 )
+exports_files(["requirements.bzl"])
 """)
 
-  repository_ctx.file("python/BUILD", "")
+  repository_ctx.file("python/BUILD", """\
+exports_files(["whl.bzl"])
+""")
   repository_ctx.template(
     "python/whl.bzl",
     Label("//rules_python:whl.bzl.tpl"),

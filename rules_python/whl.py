@@ -16,6 +16,7 @@
 import argparse
 import collections
 import distlib.markers
+import hashlib
 import itertools
 import json
 import os
@@ -65,6 +66,17 @@ class Wheel(object):
 
   def basename(self):
     return os.path.basename(self.path())
+
+  def sha256(self):
+    BUF_SIZE = 65536  # 64k chunks
+    digest = hashlib.sha256()
+    with open(self.path(), 'rb') as f:
+        while True:
+            data = f.read(BUF_SIZE)
+            if not data:
+                break
+            digest.update(data)
+    return digest.hexdigest()
 
   def distribution(self):
     # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
