@@ -9,6 +9,13 @@ PIP_CACHE="%{directory}/pip-cache"
 REQUIREMENTS_BZL_TEMP=$(mktemp)
 echo "Generating $REQUIREMENTS_BZL from ${REQUIREMENTS_TXT[@]}..."
 
+# WAR for macOS: https://github.com/Homebrew/brew/issues/837
+export HOME=$PWD
+cat <<EOF > ./.pydistutils.cfg
+[install]
+prefix=
+EOF
+
 "%{python}" "%{piptool}" resolve \
     --name "%{name}" \
     "${REQUIREMENTS_TXT[@]/#/--input=}" \
