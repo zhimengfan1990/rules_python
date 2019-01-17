@@ -31,7 +31,8 @@ def generate_build(ctx, wheel=None):
         "--repository", ctx.attr.repository,
     ]
 
-    args += ["--whl=%s" % wheel]
+    if wheel:
+        args += ["--whl=%s" % wheel]
     args += ["--add-dependency=%s" % d for d in ctx.attr.additional_runtime_deps]
     args += ["--drop-dependency=%s" % d for d in ctx.attr.remove_runtime_deps]
     if ctx.attr.additional_build_content:

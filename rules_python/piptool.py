@@ -199,9 +199,15 @@ parser.add_argument('args', nargs=argparse.REMAINDER,
 # ---------------
 
 def extract(args):
-  # Extract the files into the current directory
-  whl = Wheel(args.whl)
-  whl.expand(args.directory)
+  if args.whl:
+    # Extract the files into the current directory
+    whl = Wheel(args.whl)
+    whl.expand(args.directory)
+  else:
+    # Wheel already extracted.
+    distinfo = [d for d in os.listdir(args.directory) if d.endswith(".dist-info")]
+    assert len(distinfo) == 1
+    whl = Wheel(distinfo=distinfo[0])
 
   extra_deps = args.add_dependency or []
   drop_deps = {d: None for d in args.drop_dependency or []}
@@ -291,7 +297,7 @@ py_library(
 parser = subparsers.add_parser('extract', help='Extract one or more wheels as a py_library')
 parser.set_defaults(func=extract)
 
-parser.add_argument('--whl', action='store', required=True,
+parser.add_argument('--whl', action='store',
                     help=('The .whl file we are expanding.'))
 
 parser.add_argument('--repository', action='store', required=True,

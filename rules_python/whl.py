@@ -36,8 +36,9 @@ except ImportError:
 
 class Wheel(object):
 
-  def __init__(self, path):
+  def __init__(self, path=None, distinfo=None):
     self._path = path
+    self._distinfo = distinfo
     self._extra_deps = []
     self._extra_buildtime_deps = []
     self._extra_runtime_deps = []
@@ -67,14 +68,10 @@ class Wheel(object):
     return os.path.basename(self.path())
 
   def distribution(self):
-    # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
-    parts = self.basename().split('-')
-    return parts[0]
+    return self.name()
 
   def version(self):
-    # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
-    parts = self.basename().split('-')
-    return parts[1]
+    return self.metadata().get("version").lower()
 
   def repository_name(self, prefix='pypi'):
     # Returns the canonical name of the Bazel repository for this package.
@@ -86,34 +83,46 @@ class Wheel(object):
     # Return the name of the dist-info directory within the .whl file.
     # e.g. google_cloud-0.27.0-py2.py3-none-any.whl ->
     #      google_cloud-0.27.0.dist-info
-    return '{}-{}.dist-info'.format(self.distribution(), self.version())
+    if self._distinfo:
+      return self._distinfo
+    # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
+    parts = self.basename().split('-')
+    return '{}-{}.dist-info'.format(parts[0], parts[1])
+
+  def _open(self, path, mode="r"):
+    p = os.path.join(self._dist_info(), path)
+    if self.path():
+      with zipfile.ZipFile(self.path(), 'r') as whl:
+        return whl.open(p, mode)
+    else:
+      if not os.path.isfile(p):
+        raise KeyError(path)
+      return open(p, mode)
 
   def metadata(self):
     # Extract the structured data from metadata.json in the WHL's dist-info
     # directory.
-    with zipfile.ZipFile(self.path(), 'r') as whl:
-      # first check for metadata.json
-      try:
-        with whl.open(os.path.join(self._dist_info(), 'metadata.json')) as f:
-          return json.loads(f.read().decode("utf-8"))
-      except KeyError:
-          pass
-      # fall back to METADATA file (https://www.python.org/dev/peps/pep-0427/)
-      with whl.open(os.path.join(self._dist_info(), 'METADATA')) as f:
-        return self._parse_metadata(f.read().decode("utf-8"))
+    # first check for metadata.json
+    try:
+      with self._open('metadata.json') as f:
+        return json.loads(f.read().decode("utf-8"))
+    except KeyError:
+        pass
+    # fall back to METADATA file (https://www.python.org/dev/peps/pep-0427/)
+    with self._open('METADATA') as f:
+      return self._parse_metadata(f.read().decode("utf-8"))
 
   def entrypoints(self):
-      with zipfile.ZipFile(self.path(), 'r') as whl:
-          try:
-              with whl.open(os.path.join(self._dist_info(), 'entry_points.txt')) as f:
-                  lines = map(lambda l: l.strip().decode('utf-8'), f.readlines())
-                  stream = StringIO('\n'.join(lines))
-                  parser = ConfigParser()
-                  parser.readfp(stream)
-                  stream.close()
-                  return parser
-          except KeyError:
-              return None
+    try:
+        with self._open('entry_points.txt') as f:
+            lines = map(lambda l: l.strip().decode('utf-8'), f.readlines())
+            stream = StringIO('\n'.join(lines))
+            parser = ConfigParser()
+            parser.readfp(stream)
+            stream.close()
+            return parser
+    except KeyError:
+        return None
 
   def name(self):
     return self.metadata().get('name').lower()
@@ -173,9 +182,10 @@ class Wheel(object):
 
   # _parse_metadata parses METADATA files according to https://www.python.org/dev/peps/pep-0314/
   def _parse_metadata(self, content):
-    name_pattern = re.compile('Name: (.*)')
-    extra_pattern = re.compile('Provides-Extra: (.*)')
-    dep_pattern = re.compile('Requires-Dist: ([^;]+)(;(.*))?')
+    name_pattern = re.compile('^Name: (.*)', re.M)
+    version_pattern = re.compile('^Version: (.*)', re.M)
+    extra_pattern = re.compile('^Provides-Extra: (.*)', re.M)
+    dep_pattern = re.compile('^Requires-Dist: ([^;]+)(;(.*))?', re.M)
     deps = []
     extras = []
     env_deps = collections.defaultdict(list)
@@ -193,6 +203,7 @@ class Wheel(object):
         extras += [m.group(1).strip()]
     return {
       'name': name_pattern.search(content).group(1).strip(),
+      'version': version_pattern.search(content).group(1).strip(),
       'extras': list(set(extras)),
       'run_requires': [{ 'requires': deps }] + [{
         'environment': k,
