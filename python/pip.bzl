@@ -13,18 +13,6 @@
 # limitations under the License.
 """Import pip requirements into Bazel."""
 
-def _expand_deps_to_dict(d):
-    return "".join(['\n    "{}": [{}],'.format(k, ", ".join(['"{}"'.format(v) for v in vv])) for k, vv in d.items()])
-
-def _expand_env_to_dict(d):
-    return "".join(['\n    "{}": {{{}}},'.format(k, ", ".join(['"{}": "{}"'.format(*v.split('=')) for v in vv])) for k, vv in d.items()])
-
-def _expand_build_deps_to_dict(d):
-    return "".join(['\n    "{}": "{}",'.format(k, v) for k, v in d.items()])
-
-def _expand_array(array):
-    return "".join(['\n    "{}",'.format(item) for item in array])
-
 def _pip_import_impl(repository_ctx):
   """Core implementation of pip_import."""
 
@@ -34,26 +22,23 @@ def _pip_import_impl(repository_ctx):
   # requirements.bzl without it.
   repository_ctx.file("BUILD", """
 package(default_visibility = ["//visibility:public"])
+load(":requirements.bzl", "wheels", "build_deps")
 sh_binary(
     name = "update",
     srcs = ["update.sh"],
+    args = ["--build-dep=%s=%s" % (k, v) for k in wheels for v in build_deps(k)],
 )
 """)
 
   repository_ctx.file("python/BUILD", "")
   repository_ctx.template(
-    "python/whl.bzl",
-    Label("//rules_python:whl.bzl.tpl"),
+    "requirements.bzl",
+    Label("//rules_python:requirements.bzl.tpl"),
     substitutions = {
       "%{repo}": repository_ctx.name,
+      "%{python}": str(repository_ctx.attr.python) if repository_ctx.attr.python else "",
       "%{pip_args}": ", ".join(["\"%s\"" % arg for arg in repository_ctx.attr.pip_args]),
-      "%{requirements}": str(repository_ctx.attr.requirements_bzl),
-      "%{additional_buildtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_buildtime_deps),
-      "%{additional_buildtime_env}": _expand_env_to_dict(repository_ctx.attr.additional_buildtime_env),
-      "%{additional_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.additional_runtime_deps),
-      "%{additional_build_content}": _expand_build_deps_to_dict(repository_ctx.attr.additional_build_content),
-      "%{remove_runtime_deps}": _expand_deps_to_dict(repository_ctx.attr.remove_runtime_deps),
-      "%{patch_runtime}": _expand_deps_to_dict(repository_ctx.attr.patch_runtime),
+      "%{additional_attributes}": repository_ctx.attr.requirements_overrides or "{}",
     })
 
   repository_ctx.template(
@@ -64,7 +49,6 @@ sh_binary(
       "%{python_label}": str(repository_ctx.attr.python) if repository_ctx.attr.python else "",
       "%{piptool}": str(repository_ctx.path(repository_ctx.attr._script)),
       "%{name}": repository_ctx.attr.name,
-      "%{build_dependencies}": " ".join(['%s=%s' % (k, vv) for k,v in repository_ctx.attr.additional_buildtime_deps.items() for vv in v]),
       "%{requirements_txt}": " ".join(["\"%s\"" % str(repository_ctx.path(f)) for f in repository_ctx.attr.requirements]),
       "%{requirements_bzl}": str(repository_ctx.path(repository_ctx.attr.requirements_bzl)) if repository_ctx.attr.requirements_bzl else "",
       "%{directory}": str(repository_ctx.path("")),
@@ -74,12 +58,12 @@ sh_binary(
   )
 
   if repository_ctx.attr.requirements_bzl:
-    repository_ctx.symlink(repository_ctx.path(repository_ctx.attr.requirements_bzl), "requirements.bzl")
+    repository_ctx.symlink(repository_ctx.path(repository_ctx.attr.requirements_bzl), "requirements.gen.bzl")
   else:
     cmd = [
         "python", repository_ctx.path(repository_ctx.attr._script), "resolve",
         "--name", repository_ctx.attr.name,
-        "--output", repository_ctx.path("requirements.bzl"),
+        "--output", repository_ctx.path("requirements.gen.bzl"),
         "--directory", repository_ctx.path(""),
     ]
     cmd += ["--input=" + str(repository_ctx.path(f)) for f in repository_ctx.attr.requirements]
@@ -90,7 +74,14 @@ sh_binary(
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
 
-pip_import = repository_rule(
+def pip_import(**kwargs):
+    if "requirements_overrides" in kwargs:
+        # Overrides are serialized to string and passed to the rule, since
+        # rules cannot have deep dicts.
+        kwargs["requirements_overrides"] = str(kwargs["requirements_overrides"])
+    _pip_import(**kwargs)
+
+_pip_import = repository_rule(
     attrs = {
         "requirements": attr.label_list(
             allow_files = True,
@@ -100,13 +91,8 @@ pip_import = repository_rule(
             allow_files = True,
             single_file = True,
         ),
+        "requirements_overrides": attr.string(),
         "pip_args": attr.string_list(),
-        "additional_buildtime_deps": attr.string_list_dict(),
-        "additional_buildtime_env": attr.string_list_dict(),
-        "additional_runtime_deps": attr.string_list_dict(),
-        "additional_build_content": attr.string_dict(),
-        "remove_runtime_deps": attr.string_list_dict(),
-        "patch_runtime": attr.string_list_dict(),
         "python": attr.label(
             executable = True,
             cfg = "host",

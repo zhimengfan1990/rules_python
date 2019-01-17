@@ -160,6 +160,28 @@ load(
 
 _extras_install()
 
+wheel_overrides = {
+    "pycuda": {
+        "additional_buildtime_deps": ["numpy"],
+    },
+    "pytest-mock": {
+        "additional_buildtime_deps": ["setuptools-scm"],
+    },
+    "scikit-learn": {
+        "additional_runtime_deps": ["scipy", "numpy"],
+    },
+    # https://github.com/keras-team/keras/issues/10505
+    "keras-applications": {
+        "remove_runtime_deps": ["keras", "keras-applications"],
+    },
+    "keras-preprocessing": {
+        "remove_runtime_deps": ["keras", "keras-preprocessing"],
+    },
+    "keras": {
+        "remove_runtime_deps": ["keras"],
+    },
+}
+
 pip_import(
     name = "examples_checked_in_requirements_bzl",
     requirements = [
@@ -167,19 +189,7 @@ pip_import(
         "//examples/checked_in_requirements_bzl:requirements-2.txt",
     ],
     requirements_bzl = "//examples/checked_in_requirements_bzl:requirements.bzl",
-    additional_buildtime_deps = {
-        "pycuda": ["numpy"],
-        "pytest-mock": ["setuptools-scm"],
-    },
-    additional_runtime_deps = {
-        "scikit-learn": ["scipy", "numpy"],
-    },
-    remove_runtime_deps = {
-        # https://github.com/keras-team/keras/issues/10505
-        "keras-applications": ["keras", "keras-applications"],
-        "keras-preprocessing": ["keras", "keras-preprocessing"],
-        "keras": ["keras"],
-    },
+    requirements_overrides = wheel_overrides,
     python = "@python2//:bin/python",
 )
 
