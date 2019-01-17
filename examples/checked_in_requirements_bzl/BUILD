@@ -23,7 +23,7 @@ py_test(
     srcs = ["version_test.py"],
     deps = [
         requirement("pip"),
-        requirement("google-cloud:dirty"),
+        requirement("google-cloud"),
         requirement("scikit-learn"),
         #requirement("pycuda"),
         #requirement("botocore"),
