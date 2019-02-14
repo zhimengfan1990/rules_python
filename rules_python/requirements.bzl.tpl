@@ -4,8 +4,9 @@ load(
     _download_or_build_wheel = "download_or_build_wheel",
     _extract_wheel = "extract_wheel",
 )
-load("@%{repo}//:requirements.gen.bzl", _wheels = "wheels")
+load("@%{repo}//:requirements.gen.bzl", _resolved = "resolved")
 
+_wheels = _resolved["wheels"]
 _pip_args = [%{pip_args}]
 _python = "%{python}" or None
 _repository = "%{repo}"
@@ -66,6 +67,7 @@ def extract_wheel(wheel, distribution, rule=_extract_wheel, **kwargs):
     w = wheels[distribution]
     attrs = {a: w.get(a, None) for a in _wheel_rules.extract_wheel.attrs}
     attrs["wheel"] = wheel
+    attrs["platform"] = _resolved.get("platform", None)
     rule(
         name = w["name"],
         **attrs + kwargs

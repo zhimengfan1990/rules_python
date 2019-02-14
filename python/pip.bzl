@@ -169,10 +169,11 @@ Args:
 
 def _pip_version_proxy_impl(ctx):
     loads = "".join(["""\
-load("{repo}//:requirements.bzl", wheels_{key} = "wheels")
+load("{repo}//:requirements.bzl", resolved_{key} = "resolved")
 """.format(repo=v, key=k) for k, v in ctx.attr.values.items()])
 
     gathers = "".join(["""\
+    wheels_{key} = resolved_{key}["wheels"]
     for k, v in wheels_{key}.items():
         if "name" not in v:
             continue

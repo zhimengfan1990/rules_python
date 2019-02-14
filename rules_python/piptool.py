@@ -17,6 +17,7 @@ import argparse
 import ast
 import atexit
 import collections
+from distlib.markers import DEFAULT_CONTEXT
 import hashlib
 import io
 import itertools
@@ -343,12 +344,14 @@ def extract(args):
   whl = Wheel(args.whl)
   whl.expand(args.directory)
 
+  context = dict([v.split("=", 1) for v in args.platform])
+
   extra_deps = args.add_dependency or []
   drop_deps = {d: None for d in args.drop_dependency or []}
 
   imports = ['.']
 
-  external_deps = [d for d in itertools.chain(whl.dependencies(), extra_deps) if d not in drop_deps]
+  external_deps = [d for d in itertools.chain(whl.dependencies(context=context), extra_deps) if d not in drop_deps]
 
   contents = []
   add_build_content = args.add_build_content or []
@@ -417,7 +420,7 @@ py_library(
 )""".format(extra=extra,
             deps=','.join([
                 'requirement("%s")' % dep
-                for dep in sorted(whl.dependencies(extra))
+                for dep in sorted(whl.dependencies(extra=extra, context=context))
             ]))
     for extra in args.extras or []
   ]),
@@ -432,6 +435,9 @@ parser.add_argument('--whl', action='store', required=True,
 
 parser.add_argument('--repository', action='store', required=True,
                     help='The pip_import from which to draw dependencies.')
+
+parser.add_argument('--platform', action='append', default=[],
+                    help='Python platform info.')
 
 parser.add_argument('--add-dependency', action='append',
                     help='Specify additional dependencies beyond the ones specified in the wheel.')
@@ -670,11 +676,11 @@ def resolve(args):
   try:
     with open(args.output, 'r') as f:
       contents = f.read()
-      contents = re.sub(r"^wheels = ", "", contents, flags=re.MULTILINE)
+      contents = re.sub(r"^resolved = ", "", contents, flags=re.MULTILINE)
       # Need to use literal_eval, since this is bzl, not json (trailing commas, comments).
       wheel_info = ast.literal_eval(contents)
-      wheel_digests.update({k: v["sha256"] for k, v in wheel_info.items() if "sha256" in v})
-  except (ValueError, IOError):
+      wheel_digests.update({k: v["sha256"] for k, v in wheel_info["wheels"].items() if "sha256" in v})
+  except (ValueError, IOError, SyntaxError):
     # If we can't parse the old wheel map, the remaining steps will be a bit slower.
     print("Failed to parse old wheel map, but this is OK.")
 
@@ -715,6 +721,8 @@ def resolve(args):
           resolving=True,
         )
         wheel_digests[w.name()] = sha256
+        # Overwrite the resolved wheel with the one that has a stable digest.
+        shutil.move(os.path.join(tempdir, w.basename()), w.path())
       finally:
         shutil.rmtree(tempdir)
 
@@ -753,19 +761,25 @@ def resolve(args):
       attrs += [("build_deps", '[{}]'.format(build_deps))]
 
     return """"{}": {{
-        {},
-    }},""".format(wheel.name(), ",\n        ".join(['"{}": {}'.format(k, v) for k, v in attrs]))
+            {},
+        }},""".format(wheel.name(), ",\n            ".join(['"{}": {}'.format(k, v) for k, v in attrs]))
 
   with open(args.output, 'w') as f:
     f.write("""\
 # Install pip requirements.
 #
 {comment}
-wheels = {{
-    {wheels}
+resolved = {{
+    "wheels": {{
+        {wheels}
+    }},
+    "platform": {{
+        {platform}
+    }},
 }}
 """.format(comment='\n'.join(['# Generated from ' + i for i in args.input]),
-           wheels='\n    '.join(map(whl_library, whls))))
+           wheels='\n        '.join(map(whl_library, whls)),
+           platform='\n        '.join('"%s": "%s",' % (k, v) for k, v in sorted(DEFAULT_CONTEXT.items()))))
 
 parser = subparsers.add_parser('resolve', help='Resolve requirements.bzl from requirements.txt')
 parser.set_defaults(func=resolve)

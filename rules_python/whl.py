@@ -106,7 +106,7 @@ class Wheel(object):
   def name(self):
     return self.metadata().get('name').lower()
 
-  def dependencies(self, extra=None, all_extras=False):
+  def dependencies(self, extra=None, all_extras=False, context=None):
     """Access the dependencies of this Wheel.
 
     Args:
@@ -126,7 +126,11 @@ class Wheel(object):
         continue
       if 'environment' in requirement:
         try:
-          if not distlib.markers.interpret(requirement['environment'], {'extra': extra}):
+          ctx = {}
+          if context:
+            ctx.update(context)
+          ctx['extra'] = extra
+          if not distlib.markers.interpret(requirement['environment'], ctx):
             continue
         except SyntaxError as e:
           raise RuntimeError('Error interpreting environment for {} ({}): {}'.format(
