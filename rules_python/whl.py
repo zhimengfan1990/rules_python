@@ -87,8 +87,12 @@ class Wheel(object):
       except KeyError:
           pass
       # fall back to METADATA file (https://www.python.org/dev/peps/pep-0427/)
-      with whl.open(os.path.join(self._dist_info(), 'METADATA')) as f:
-        return self._parse_metadata(f.read().decode("utf-8"))
+      try:
+        with whl.open(os.path.join(self._dist_info(), 'METADATA')) as f:
+          return self._parse_metadata(f.read().decode("utf-8"))
+      except:
+        with whl.open(os.path.join('{}-{}.dist-info'.format(self.distribution(), self.version()), 'METADATA')) as f:
+          return self._parse_metadata(f.read().decode("utf-8"))
 
   def entrypoints(self):
       with zipfile.ZipFile(self.path(), 'r') as whl:
